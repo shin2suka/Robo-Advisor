@@ -4,7 +4,7 @@ import yfinance as yf
 from datetime import date
 
 
-def download(tickers, risk_level, start='2015-01-01', end=date.today(), save=True):
+def download(tickers, risk_level, start='2019-05-20', end=date.today(), save=True):
     df = yf.download(tickers, start, end)
     if save:
         df.to_csv("data/" + risk_level + ".csv")
@@ -13,6 +13,6 @@ def download(tickers, risk_level, start='2015-01-01', end=date.today(), save=Tru
 
 
 def load_data(tickers, risk_level):
-    df = download(tickers, risk_level, save=True)
+    df = download(tickers, risk_level, save=False)
     return df["Adj Close"]
 
