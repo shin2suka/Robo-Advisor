@@ -32,11 +32,11 @@ def main():
     print(cleaned_weights)
     ef.portfolio_performance(verbose=True)
     
-    latest_prices = get_latest_prices(df)
-    da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=10000)
-    allocation, leftover = da.lp_portfolio()
-    print("Discrete allocation:", allocation)
-    print("Funds remaining: ${:.2f}".format(leftover))
+    # latest_prices = get_latest_prices(df)
+    # da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=10000)
+    # allocation, leftover = da.lp_portfolio()
+    # print("Discrete allocation:", allocation)
+    # print("Funds remaining: ${:.2f}".format(leftover))
 
 if __name__ == "__main__":
     agent = main()
