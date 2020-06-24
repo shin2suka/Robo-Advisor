@@ -57,16 +57,21 @@ class Account:
         
 def breach_check(v1, v2):
     ratio = v1 / v2
-    if ratio > 1.5 or ratio <= 2/3:
+    if ratio > 1.2 or ratio <= 5/6:
+        print('breach!!!!')
+        print('v1:' + str(v1))
+        print('v2:' + str(v2))
         return abs(v1 - v2) / 2
                
         
 if __name__ == "__main__":
-    _price_array_dict = {'A': np.array([1,2,3,4,5]), 'B': np.array([2,3,4,5,6])}
-    a = Account("USD", 10000, {'A': 0.2, 'B': 0.8})
-    a_gen = a.generate_market_value(_price_array_dict)
-    while True:
-        print(next(a_gen))
+    data = load_data(*_get_tickers())
+    
+    # _price_array_dict = {'A': np.array([1,2,3,4,5]), 'B': np.array([2,3,4,5,6])}
+    # a = Account("USD", 10000, {'A': 0.2, 'B': 0.8})
+    # a_gen = a.generate_market_value(_price_array_dict)
+    # while True:
+    #     print(next(a_gen))
     
         
     
