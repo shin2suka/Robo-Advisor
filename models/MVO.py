@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize
+from scipy.optimize import Bounds
 from scipy.stats import norm
 from tqdm import tqdm
 
@@ -32,34 +33,42 @@ class MVPort:
         error=(self.rtnM.mean()-total_return_of_portfolio*12)/total_risk_of_portfolio
         return error
     
-    def get_signal(self, timeseries, initial_weights, return_timeseries, tol = 1e-10):
+    def get_signal(self, timeseries, lb, ub, initial_weights, return_timeseries, tol = 1e-10):
         miu, cov = self.calculate_miu_cov(timeseries, return_timeseries)
         constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
                         {'type': 'ineq', 'fun': lambda x: x})
+        
+        x0_bounds = (0, 0.1)
+        x1_bounds = (0, 1)
+        x2_bounds = (0, 0.5)
+        x3_bounds = (0, 0.5)
+        bounds = [x0_bounds, x1_bounds, x2_bounds, x3_bounds]
 
         optimize_result = minimize(fun=self.objection_error,
                                     x0=initial_weights,
                                     args=[miu, cov],
                                     method='SLSQP',
                                     constraints=constraints,
+                                    bounds=bounds,
                                     tol=tol,
                                     options={'disp': False})
 
         weight = optimize_result.x
         return weight
 
-    def get_allocations(self, timeseries, return_timeseries=False, rolling_window = 24):
-        allocations = np.zeros(timeseries.shape)*np.nan
+    def get_allocations(self, timeseries, lb=0, ub=0, return_timeseries=False, rolling_window = 24):
+        allocations = np.zeros(timeseries.shape)
         initial_weights = [1 / timeseries.shape[1]] * timeseries.shape[1]
         for i in tqdm(range(rolling_window, timeseries.shape[0])):
-            allocations[i,] = self.get_signal(timeseries[i-rolling_window:i+1,], initial_weights, return_timeseries)
+            allocations[i,] = self.get_signal(timeseries[i-rolling_window:i+1,], lb, ub, initial_weights, return_timeseries)
         return allocations
     
 if __name__ == "__main__":
-    import pandas as pd
-    df = pd.read_csv("data/portfolio_returns.csv").dropna()
-    df.head()
-    df = df.drop(["Dates","HFRIFOF Index","USGG3M Index"],axis=1)
-    mvo = MVPort(df.values)
-    print(mvo.get_allocations(df.values, return_timeseries=True))
-    
+    import yfinance as yf
+    import matplotlib.pyplot as plt
+    tickers = ["AAPL", "TSLA", "SPY", "MCD"]
+    data = yf.download(tickers, start="2015-01-01")    
+    timeseries = data[["Adj Close"]].values
+    mvo = MVPort(timeseries)
+    print(mvo.get_allocations(timeseries, return_timeseries=False))
+    np.sum(mvo.get_allocations(timeseries, return_timeseries=False),axis=1)
