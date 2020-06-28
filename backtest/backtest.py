@@ -5,7 +5,6 @@ Created on Wed Jun 24 13:17:22 2020
 @author: zhongheng
 """
 
-import pandas as pd
 import numpy as np
 
 class Account:
@@ -38,7 +37,8 @@ class Account:
             if adjustment:
                 self.__value += adjustment
                 amount_arr = np.divide(weight_arr * self.__value, price_matrix[:, i].reshape(1, -1))
-            i += 1
+            else:
+                i += 1
                 
 
     def rebalance_active(self, new_portfolio):
@@ -54,13 +54,10 @@ class Account:
 
         """
         self.__portfolio = new_portfolio
-        
+                     
 def breach_check(v1, v2):
     ratio = v1 / v2
-    if ratio > 1.2 or ratio <= 5/6:
-        print('breach!!!!')
-        print('v1:' + str(v1))
-        print('v2:' + str(v2))
+    if ratio > 1.5 or ratio <= 2/3:
         return abs(v1 - v2) / 2
                
         

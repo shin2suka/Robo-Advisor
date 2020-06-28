@@ -4,6 +4,6 @@ CLIENTS_INFO = {
                 "injection": 10000          # deposit new money monthly
                 }
 
-HIGH_TICKERS = []
-MED_TICKERS = []
-LOW_TICKERS = ['AAPL', 'MCD', 'SPY', 'LK', 'RCL']
+USD_TICKERS = []
+CAD_TICKERS = []
+

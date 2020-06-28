@@ -1,7 +1,8 @@
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, LinearConstraint
 from scipy.optimize import Bounds
 from scipy.stats import norm
+from scipy.stats.mstats import gmean
 from tqdm import tqdm
 
 class MVPort:
@@ -18,7 +19,8 @@ class MVPort:
     def calculate_miu_cov(self, timeseries, return_timeseries):
         if not return_timeseries:
             timeseries = self.price_to_log_return(timeseries)
-        miu = np.mean(timeseries, axis=0)
+        #miu = np.mean(timeseries, axis=0).reshape(1, -1)     
+        miu = gmean(timeseries, axis=0).reshape(1, -1)
         cov = np.cov(timeseries.T)
         return miu, cov
     
@@ -38,10 +40,10 @@ class MVPort:
         constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
                         {'type': 'ineq', 'fun': lambda x: x})
         
-        x0_bounds = (0, 0.1)
+        x0_bounds = (0, 1)
         x1_bounds = (0, 1)
-        x2_bounds = (0, 0.5)
-        x3_bounds = (0, 0.5)
+        x2_bounds = (0, 1)
+        x3_bounds = (0, 1)
         bounds = [x0_bounds, x1_bounds, x2_bounds, x3_bounds]
 
         optimize_result = minimize(fun=self.objection_error,
@@ -49,7 +51,7 @@ class MVPort:
                                     args=[miu, cov],
                                     method='SLSQP',
                                     constraints=constraints,
-                                    bounds=bounds,
+                                    #bounds=bounds,
                                     tol=tol,
                                     options={'disp': False})
 
@@ -63,12 +65,34 @@ class MVPort:
             allocations[i,] = self.get_signal(timeseries[i-rolling_window:i+1,], lb, ub, initial_weights, return_timeseries)
         return allocations
     
+    def get_signal_ray(self, timeseries, target_return, return_timeseries, tol = 1e-10):
+        initial_weights = [1 / timeseries.shape[1]] * timeseries.shape[1]
+        # miu, cov = self.calculate_miu_cov(timeseries, return_timeseries)
+
+        # constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
+        #                 # {'type': 'ineq', 'fun': lambda x: x},
+        #                 # {'type': 'ineq', 'fun': lambda x: 1 - x},
+        #                 {'type': 'eq', 'fun': lambda x: np.dot(miu, x) - target_return})
+        # optimize_result = minimize(fun=self.portfolio_std,
+        #                     x0=initial_weights,
+        #                     args=cov,
+        #                     method='SLSQP',
+        #                     constraints=constraints,
+        #                     bounds=[(0, 1) for i in range(timeseries.shape[1])],
+        #                     tol=tol,
+        #                     options={'disp': False})    
+        # weight = optimize_result.x
+        return initial_weights
+    
+
+    
 if __name__ == "__main__":
     import yfinance as yf
     import matplotlib.pyplot as plt
-    tickers = ["AAPL", "TSLA", "SPY", "MCD"]
-    data = yf.download(tickers, start="2015-01-01")    
+    tickers = ["CCL", "RCL", "MCD"]
+    data = yf.download(tickers, start="2019-01-01")  
+    print(data)
     timeseries = data[["Adj Close"]].values
     mvo = MVPort(timeseries)
-    print(mvo.get_allocations(timeseries, return_timeseries=False))
-    np.sum(mvo.get_allocations(timeseries, return_timeseries=False),axis=1)
+    initial_weights = [1 / timeseries.shape[1]] * timeseries.shape[1]
+    print(mvo.get_signal_ray(timeseries, lb=0, ub =0, initial_weights = initial_weights, target_return = 0.2, return_timeseries=False))
