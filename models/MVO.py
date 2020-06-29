@@ -32,7 +32,7 @@ class MVPort:
         cov = args[1]
         total_risk_of_portfolio = self.portfolio_std(weight, cov)
         total_return_of_portfolio = (weight*miu).sum()
-        error=(self.rtnM.mean()-total_return_of_portfolio*12)/total_risk_of_portfolio
+        error=(self.rtnM.mean()-total_return_of_portfolio)/total_risk_of_portfolio
         return error
     
     def get_signal(self, timeseries, lb, ub, initial_weights, return_timeseries, tol = 1e-10):
@@ -67,22 +67,22 @@ class MVPort:
     
     def get_signal_ray(self, timeseries, target_return, return_timeseries, tol = 1e-10):
         initial_weights = [1 / timeseries.shape[1]] * timeseries.shape[1]
-        # miu, cov = self.calculate_miu_cov(timeseries, return_timeseries)
+        miu, cov = self.calculate_miu_cov(timeseries, return_timeseries)
 
-        # constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
-        #                 # {'type': 'ineq', 'fun': lambda x: x},
-        #                 # {'type': 'ineq', 'fun': lambda x: 1 - x},
-        #                 {'type': 'eq', 'fun': lambda x: np.dot(miu, x) - target_return})
-        # optimize_result = minimize(fun=self.portfolio_std,
-        #                     x0=initial_weights,
-        #                     args=cov,
-        #                     method='SLSQP',
-        #                     constraints=constraints,
-        #                     bounds=[(0, 1) for i in range(timeseries.shape[1])],
-        #                     tol=tol,
-        #                     options={'disp': False})    
-        # weight = optimize_result.x
-        return initial_weights
+        constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
+                        # {'type': 'ineq', 'fun': lambda x: x},
+                        # {'type': 'ineq', 'fun': lambda x: 1 - x},
+                        {'type': 'eq', 'fun': lambda x: np.dot(miu, x) - target_return})
+        optimize_result = minimize(fun=self.portfolio_std,
+                            x0=initial_weights,
+                            args=cov,
+                            method='SLSQP',
+                            constraints=constraints,
+                            bounds=[(0, 1) for i in range(timeseries.shape[1])],
+                            tol=tol,
+                            options={'disp': False})    
+        weight = optimize_result.x
+        return weight
     
 
     

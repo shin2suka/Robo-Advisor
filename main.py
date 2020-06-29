@@ -46,12 +46,13 @@ def main():
 if __name__ == "__main__":
     
     # USD/CAD account asset universe
-    ASSET_UNIVERSE_USD = ['AAPL', 'MCD'] 
-    ASSET_UNIVERSE_CAD = ['CCL', 'RCL']
+    ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO"] 
+    ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO"]
 
     #load data
-    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2018-01-01', end=date.today())
+    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')
     df = df['Adj Close']
+    df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     dt_list = df.index
     
     # rolling window & rebalance frequency (both in weeks)
@@ -69,7 +70,7 @@ if __name__ == "__main__":
     test_start_date = train_end_date + timedelta(days = 1)
     test_end_date = test_start_date + timedelta(weeks = rebalance_freq)
     
-    n_rebalance_freq = (dt_list[-1] - test_start_date).days // 7 + 1
+    n_rebalance_freq = len(pd.period_range(test_start_date, dt_list[-1], freq='Q'))
     
     # prepare data
     df_period_train = df[train_start_date: train_end_date]
@@ -136,8 +137,10 @@ if __name__ == "__main__":
         # portfolio optimize
         mvoUSD = MVPort(timeseriesUSD)
         mvoCAD = MVPort(timeseriesCAD)
-        weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.1, return_timeseries=False)
-        weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.1, return_timeseries=False)
+        weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.01, return_timeseries=False)
+        weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.01, return_timeseries=False)
+        print(weightUSD)
+        print(weightCAD)
     
         # array to dict
         portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
