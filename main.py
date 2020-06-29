@@ -2,6 +2,7 @@ from preprocessing.data_wrangling import *
 from configs.inputs import *
 from backtest.backtest import *
 from models.MVO import *
+from models.Robust_MVO import *
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta, date
@@ -146,8 +147,8 @@ if __name__ == "__main__":
         df_period_test = df[test_start_date: test_end_date]
         
         # portfolio optimize
-        mvoUSD = MVPort(timeseriesUSD)
-        mvoCAD = MVPort(timeseriesCAD)
+        mvoUSD = Robust_MVPort(timeseriesUSD)
+        mvoCAD = Robust_MVPort(timeseriesCAD)
         weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
         weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
         print(weightUSD)

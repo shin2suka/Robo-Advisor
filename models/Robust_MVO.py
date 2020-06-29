@@ -13,10 +13,10 @@ class Robust_MVPort:
     """
     Robust Mean variance Optimization portfolio
     """
-    def __init__(self, rtnM, alpha):
+    def __init__(self, rtnM, alpha=0.95):
         self.rtnM = rtnM
         self.ep = np.sqrt(chi2.ppf(alpha, self.rtnM.shape[1]))
-        print("ep: \t %f"%(self.ep))
+        # print("ep: \t %f"%(self.ep))
 
     def price_to_log_return(self, timeseries):
         log_return = np.diff(np.log(timeseries), axis=0)
@@ -35,7 +35,7 @@ class Robust_MVPort:
         return np.sqrt(Theta)
 
     def portfolio_std(self, weight, cov):
-        return self.lmd * np.sqrt(np.dot(np.dot(weight, cov), weight.T))
+        return np.sqrt(np.dot(np.dot(weight, cov), weight.T))
 
     def objection_error(self, weight, args):
         miu = args[0]
