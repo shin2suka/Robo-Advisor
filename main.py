@@ -46,14 +46,24 @@ def main():
 if __name__ == "__main__":
     
     # USD/CAD account asset universe
-    ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO"] 
-    ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO"]
+    ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO", "USO", "GLD"] 
+    ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HOU.TO", "HUG.TO"]
 
     #load data
     df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')
     df = df['Adj Close']
-    df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     dt_list = df.index
+    
+    # FX
+    df_fx = yf.download("CAD=X", start='2010-01-01', end='2014-12-31')
+    df_fx = df_fx['Adj Close']
+    
+    # join two dataframes
+    df = df.join(df_fx)
+    df = df.rename(columns={"Adj Close": "FX"})
+    
+    # fill na (forward)
+    df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     
     # rolling window & rebalance frequency (both in weeks)
     rolling_window = 52
@@ -95,6 +105,7 @@ if __name__ == "__main__":
     for i in range(n_rebalance_freq):
         price_arr_dict_CAD = df_period_test[ASSET_UNIVERSE_CAD].to_dict('list')
         price_arr_dict_USD = df_period_test[ASSET_UNIVERSE_USD].to_dict('list')
+        FX_arr = df_period_test["FX"].values
         
         acc_gen_CAD = accountCAD.generate_market_value(price_arr_dict_CAD)
         acc_gen_USD = accountUSD.generate_market_value(price_arr_dict_USD)
@@ -102,7 +113,7 @@ if __name__ == "__main__":
         for j in range(len(df_period_test)):
             
             v1 = next(acc_gen_CAD)
-            v2 = next(acc_gen_USD)
+            v2 = next(acc_gen_USD) * FX_arr[j]
             
             acc_CAD_val_list.append(v1)
             acc_USD_val_list.append(v2)
@@ -137,8 +148,8 @@ if __name__ == "__main__":
         # portfolio optimize
         mvoUSD = MVPort(timeseriesUSD)
         mvoCAD = MVPort(timeseriesCAD)
-        weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.01, return_timeseries=False)
-        weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.01, return_timeseries=False)
+        weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
+        weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
         print(weightUSD)
         print(weightCAD)
     

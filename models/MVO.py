@@ -20,7 +20,7 @@ class MVPort:
         if not return_timeseries:
             timeseries = self.price_to_log_return(timeseries)
         #miu = np.mean(timeseries, axis=0).reshape(1, -1)     
-        miu = gmean(timeseries, axis=0).reshape(1, -1)
+        miu = (gmean(1+timeseries, axis=0)-1).reshape(1, -1)
         cov = np.cov(timeseries.T)
         return miu, cov
     
@@ -78,7 +78,7 @@ class MVPort:
                             args=cov,
                             method='SLSQP',
                             constraints=constraints,
-                            bounds=[(0, 1) for i in range(timeseries.shape[1])],
+                            bounds=[(0, 0.5) for i in range(timeseries.shape[1])],
                             tol=tol,
                             options={'disp': False})    
         weight = optimize_result.x
