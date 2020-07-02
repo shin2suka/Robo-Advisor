@@ -1,0 +1,11 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+.DS_Store
+.nn.py.swp

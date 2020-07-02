@@ -26,24 +26,7 @@ def _get_tickers():
 def main():
     df = load_data(*_get_tickers())
     
-    # # Calculate expected returns and sample covariance
-    # mu = expected_returns.mean_historical_return(df)
-    # S = risk_models.sample_cov(df)
-
-    # # Optimise for maximal Sharpe ratio
-    # ef = EfficientFrontier(mu, S)
-    # raw_weights = ef.max_sharpe()
-    # cleaned_weights = ef.clean_weights()
-    # ef.save_weights_to_file("weights.csv")  # saves to file
-    # print(cleaned_weights)
-    # ef.portfolio_performance(verbose=True)
     
-    # latest_prices = get_latest_prices(df)
-    # da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=10000)
-    # allocation, leftover = da.lp_portfolio()
-    # print("Discrete allocation:", allocation)
-    # print("Funds remaining: ${:.2f}".format(leftover))
-
 if __name__ == "__main__":
     
     # USD/CAD account asset universe
@@ -100,8 +83,11 @@ if __name__ == "__main__":
     portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
     
     # initialize two accounts  
-    accountUSD = Account("USD", 10000, portfolio_USD)
-    accountCAD = Account("CAD", 10000, portfolio_CAD)
+    accountUSD = Account("USD", 100000, portfolio_USD)
+    accountCAD = Account("CAD", 100000, portfolio_CAD)
+    
+    # initialize previous weights to calculate transaction cost
+    pre_weight_usd, pre_weight_cad = np.zeros(len(ASSET_UNIVERSE_USD)), np.zeros(len(ASSET_UNIVERSE_CAD))
     
     for i in range(n_rebalance_freq):
         price_arr_dict_CAD = df_period_test[ASSET_UNIVERSE_CAD].to_dict('list')
@@ -151,16 +137,25 @@ if __name__ == "__main__":
         mvoCAD = Robust_MVPort(timeseriesCAD)
         weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
         weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
-        print(weightUSD)
-        print(weightCAD)
-    
-        # array to dict
+        
+        # calculate t cost for each turnover
+        temp1 = abs(weightUSD - pre_weight_usd)
+        temp2 = abs(weightCAD - pre_weight_cad)
+        t_cost_usd = len(temp1[temp1>0.001]) * 5
+        t_cost_cad = len(temp2[temp2>0.001]) * 5
+        
+        # portfolio weights array to dict
         portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
         portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
-        
+
+    
         # feed new portfolios into accounts
         accountUSD.rebalance_active(portfolio_USD)
         accountCAD.rebalance_active(portfolio_CAD)
+        
+        # update previous weights
+        pre_weight_usd = weightUSD
+        pre_weight_cad = weightCAD
         
   
     plt.plot(acc_CAD_val_list, label = 'accountCAD')
