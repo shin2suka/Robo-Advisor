@@ -22,6 +22,8 @@ def _get_tickers():
         tickers = LOW_TICKERS
     return tickers, CLIENTS_INFO["risk_level"]
 
+def nearest(items, pivot):
+    return min(items, key=lambda x: abs(x - pivot))
 
 def main():
     df = load_data(*_get_tickers())
@@ -32,6 +34,9 @@ if __name__ == "__main__":
     # USD/CAD account asset universe
     ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO", "USO", "GLD"] 
     ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HOU.TO", "HUG.TO"]
+    
+    
+    INJECTION_FREQ = 24
 
     #load data
     df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')
@@ -83,11 +88,12 @@ if __name__ == "__main__":
     portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
     
     # initialize two accounts  
-    accountUSD = Account("USD", 100000, portfolio_USD)
-    accountCAD = Account("CAD", 100000, portfolio_CAD)
+    # substract the transaction cost
+    accountUSD = Account("USD", 50000 / df_fx.loc[test_start_date] - len(ASSET_UNIVERSE_USD) * 5, portfolio_USD)
+    accountCAD = Account("CAD", 50000 - len(ASSET_UNIVERSE_CAD) * 5, portfolio_CAD)
     
     # initialize previous weights to calculate transaction cost
-    pre_weight_usd, pre_weight_cad = np.zeros(len(ASSET_UNIVERSE_USD)), np.zeros(len(ASSET_UNIVERSE_CAD))
+    # pre_weight_usd, pre_weight_cad = np.zeros(len(ASSET_UNIVERSE_USD)), np.zeros(len(ASSET_UNIVERSE_CAD))
     
     for i in range(n_rebalance_freq):
         price_arr_dict_CAD = df_period_test[ASSET_UNIVERSE_CAD].to_dict('list')
@@ -105,7 +111,6 @@ if __name__ == "__main__":
             acc_CAD_val_list.append(v1)
             acc_USD_val_list.append(v2)
             
-            # FX ignored
             adjustment = breach_check(v1, v2)
             
             if adjustment:
@@ -138,25 +143,39 @@ if __name__ == "__main__":
         weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
         weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
         
+        # calculate transaction cost
+        pre_weight_CAD = np.array(list(accountCAD.get_weight().values()))
+        pre_weight_USD = np.array(list(accountUSD.get_weight().values()))
+                
         # calculate t cost for each turnover
-        temp1 = abs(weightUSD - pre_weight_usd)
-        temp2 = abs(weightCAD - pre_weight_cad)
+        temp1 = abs(weightUSD - pre_weight_USD)
+        temp2 = abs(weightCAD - pre_weight_CAD)
         t_cost_usd = len(temp1[temp1>0.001]) * 5
         t_cost_cad = len(temp2[temp2>0.001]) * 5
         
+        acc_gen_CAD.send(-t_cost_cad)
+        acc_gen_USD.send(-t_cost_usd)
+               
         # portfolio weights array to dict
         portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
         portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
-
     
         # feed new portfolios into accounts
         accountUSD.rebalance_active(portfolio_USD)
         accountCAD.rebalance_active(portfolio_CAD)
         
         # update previous weights
-        pre_weight_usd = weightUSD
-        pre_weight_cad = weightCAD
+        # pre_weight_usd = weightUSD
+        # pre_weight_cad = weightCAD
         
+        if i % (INJECTION_FREQ / rebalance_freq) == 0 and i != 0:
+            acc_gen_CAD.send(5000)
+            try:
+                acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
+            except KeyError:
+                acc_gen_USD.send(5000 / df_fx.loc[nearest(df_fx.index, test_start_date)])
+            print('injection = ' + str(i))
+            
   
     plt.plot(acc_CAD_val_list, label = 'accountCAD')
     plt.plot(acc_USD_val_list, label = 'accountUSD')

@@ -13,6 +13,9 @@ class Account:
         self.__portfolio = portfolio
         self.__value = init_invest
         
+    def get_weight(self):
+        return self.__portfolio
+        
     def generate_market_value(self, price_array_dict):
         """
         Parameters
