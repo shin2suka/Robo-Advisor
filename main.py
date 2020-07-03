@@ -6,12 +6,13 @@ from models.Robust_MVO import *
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta, date
+from dateutil.relativedelta import relativedelta
+import calendar
 from pypfopt import EfficientFrontier
 from pypfopt import risk_models
 from pypfopt import expected_returns
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
-
-
+import time
 
 def _get_tickers():
     if CLIENTS_INFO["risk_level"] == "high":
@@ -35,13 +36,13 @@ if __name__ == "__main__":
     ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO", "USO", "GLD"] 
     ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HOU.TO", "HUG.TO"]
     
-    
-    INJECTION_FREQ = 24
+    # injection frequency = half year
+    INJECTION_FREQ = 6
 
     #load data
-    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')
+    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')      
     df = df['Adj Close']
-    dt_list = df.index
+    dt_list = list(df.index)
     
     # FX
     df_fx = yf.download("CAD=X", start='2010-01-01', end='2014-12-31')
@@ -54,9 +55,9 @@ if __name__ == "__main__":
     # fill na (forward)
     df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     
-    # rolling window & rebalance frequency (both in weeks)
-    rolling_window = 52
-    rebalance_freq = 12
+    # rolling window & rebalance frequency (both in months)
+    rolling_window = 12
+    rebalance_freq = 3
     
     # two lists to record account value
     acc_CAD_val_list = list()
@@ -64,12 +65,17 @@ if __name__ == "__main__":
     
     # datetime 
     train_start_date = dt_list[0]
-    train_end_date = dt_list[0] + timedelta(weeks = rolling_window)
+    train_end_date = train_start_date + relativedelta(months=rolling_window - 1) 
+    train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1]
     
-    test_start_date = train_end_date + timedelta(days = 1)
-    test_end_date = test_start_date + timedelta(weeks = rebalance_freq)
+    test_start_date = train_end_date + relativedelta(months = 1)
+    test_start_date =  [x for x in dt_list if x.month == test_start_date.month and x.year == test_start_date.year][0] 
+    _test_start_date_index = dt_list.index(test_start_date)
     
-    n_rebalance_freq = len(pd.period_range(test_start_date, dt_list[-1], freq='Q'))
+    test_end_date = test_start_date + relativedelta(months=rebalance_freq - 1)
+    test_end_date = [x for x in dt_list if x.month == test_end_date.month and x.year == test_end_date.year][-1] 
+    
+    n_rebalance_freq = len(pd.period_range(test_start_date, dt_list[-1], freq='Q')) 
     
     # prepare data
     df_period_train = df[train_start_date: train_end_date]
@@ -92,10 +98,9 @@ if __name__ == "__main__":
     accountUSD = Account("USD", 50000 / df_fx.loc[test_start_date] - len(ASSET_UNIVERSE_USD) * 5, portfolio_USD)
     accountCAD = Account("CAD", 50000 - len(ASSET_UNIVERSE_CAD) * 5, portfolio_CAD)
     
-    # initialize previous weights to calculate transaction cost
-    # pre_weight_usd, pre_weight_cad = np.zeros(len(ASSET_UNIVERSE_USD)), np.zeros(len(ASSET_UNIVERSE_CAD))
     
     for i in range(n_rebalance_freq):
+        
         price_arr_dict_CAD = df_period_test[ASSET_UNIVERSE_CAD].to_dict('list')
         price_arr_dict_USD = df_period_test[ASSET_UNIVERSE_USD].to_dict('list')
         FX_arr = df_period_test["FX"].values
@@ -124,12 +129,24 @@ if __name__ == "__main__":
                 else:
                     acc_gen_CAD.send(adjustment)
                     acc_gen_USD.send(-adjustment)
+                    
+        # avoid redundant loop
+        if i == n_rebalance_freq - 1:
+            break
         
         # shift rolling window
-        test_start_date = test_end_date + timedelta(days = 1)
-        test_end_date = test_start_date + timedelta(weeks = rebalance_freq)
-        train_start_date = test_start_date - timedelta(weeks = rolling_window)
-        train_end_date = test_start_date - timedelta(days = 1)
+        test_start_date = test_end_date + relativedelta(months = 1)
+        
+        test_start_date =  [x for x in dt_list if x.month == test_start_date.month and x.year == test_start_date.year][0] 
+        print(test_start_date)
+        test_end_date = test_start_date + relativedelta(months = rebalance_freq - 1)
+        test_end_date = [x for x in dt_list if x.month == test_end_date.month and x.year == test_end_date.year][-1] 
+        print(test_end_date)
+        train_end_date = test_start_date - relativedelta(months = 1)
+        train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1] 
+        train_start_date = train_end_date - relativedelta(months = rolling_window - 1)
+        train_start_date = [x for x in dt_list if x.month == train_start_date.month and x.year == train_start_date.year][0] 
+        
         
         # re-slice data
         df_period_train = df[train_start_date: train_end_date]
@@ -143,7 +160,7 @@ if __name__ == "__main__":
         weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
         weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
         
-        # calculate transaction cost
+        # previous portfolio weight
         pre_weight_CAD = np.array(list(accountCAD.get_weight().values()))
         pre_weight_USD = np.array(list(accountUSD.get_weight().values()))
                 
@@ -164,23 +181,20 @@ if __name__ == "__main__":
         accountUSD.rebalance_active(portfolio_USD)
         accountCAD.rebalance_active(portfolio_CAD)
         
-        # update previous weights
-        # pre_weight_usd = weightUSD
-        # pre_weight_cad = weightCAD
-        
-        if i % (INJECTION_FREQ / rebalance_freq) == 0 and i != 0:
+        # injection (half year)        
+        if i % (INJECTION_FREQ / rebalance_freq) == 0:
             acc_gen_CAD.send(5000)
-            try:
-                acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
-            except KeyError:
-                acc_gen_USD.send(5000 / df_fx.loc[nearest(df_fx.index, test_start_date)])
-            print('injection = ' + str(i))
+            acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
+            print("injection = " + str(i))
             
-  
+   
+    test_time_period = dt_list[_test_start_date_index:]
     plt.plot(acc_CAD_val_list, label = 'accountCAD')
     plt.plot(acc_USD_val_list, label = 'accountUSD')
     plt.legend()
     plt.show()
+    
+
         
 
                 
