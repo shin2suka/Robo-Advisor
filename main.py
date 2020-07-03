@@ -182,19 +182,22 @@ if __name__ == "__main__":
         accountCAD.rebalance_active(portfolio_CAD)
         
         # injection (half year)        
-        if i % (INJECTION_FREQ / rebalance_freq) == 0:
+        if i % (INJECTION_FREQ / rebalance_freq) == 1:
             acc_gen_CAD.send(5000)
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             print("injection = " + str(i))
             
    
     test_time_period = dt_list[_test_start_date_index:]
-    plt.plot(acc_CAD_val_list, label = 'accountCAD')
-    plt.plot(acc_USD_val_list, label = 'accountUSD')
+    acc_value_df = pd.DataFrame({"accountCAD": acc_CAD_val_list, "accountUSD": acc_USD_val_list}, index = test_time_period)
+    # plt.plot(acc_CAD_val_list, label = 'accountCAD')
+    # plt.plot(acc_USD_val_list, label = 'accountUSD')
+    acc_value_df.plot()
     plt.legend()
     plt.show()
     
 
+   
         
 
                 
