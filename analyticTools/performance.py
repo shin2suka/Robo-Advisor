@@ -31,4 +31,5 @@ def get_performance(returns, risk_free):
     stats["skew"] = round(float(skew(returns)), 5)
     stats["maxDD"] = round(maxdrawdown(returns), 5)
     return stats
-            
+
+

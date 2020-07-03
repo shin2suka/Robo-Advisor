@@ -6,11 +6,12 @@ from models.Robust_MVO import *
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta, date
+from calendar import monthrange
 from pypfopt import EfficientFrontier
 from pypfopt import risk_models
 from pypfopt import expected_returns
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
-
+import time
 
 
 def _get_tickers():
@@ -30,7 +31,7 @@ def main():
     
     
 if __name__ == "__main__":
-    
+
     # USD/CAD account asset universe
     ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO", "USO", "GLD"] 
     ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HOU.TO", "HUG.TO"]
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     
     # FX
     df_fx = yf.download("CAD=X", start='2010-01-01', end='2014-12-31')
+    start_time = time.time()
     df_fx = df_fx['Adj Close']
     
     # join two dataframes
@@ -57,20 +59,26 @@ if __name__ == "__main__":
     # rolling window & rebalance frequency (both in weeks)
     rolling_window = 52
     rebalance_freq = 12
-    
+    train_years = 1     # years using for model training
+     
     # two lists to record account value
     acc_CAD_val_list = list()
     acc_USD_val_list = list()
     
-    # datetime 
-    train_start_date = dt_list[0]
-    train_end_date = dt_list[0] + timedelta(weeks = rolling_window)
+    # datetime
     
-    test_start_date = train_end_date + timedelta(days = 1)
-    test_end_date = test_start_date + timedelta(weeks = rebalance_freq)
+    train_dates = dt_list[dt_list.year ==  dt_list[0].year]
+    test_dates = dt_list[dt_list > str(dt_list[0].year + train_years)]
     
-    n_rebalance_freq = len(pd.period_range(test_start_date, dt_list[-1], freq='Q'))
+    train_start_date = train_dates[0]
+    train_end_date = train_dates[-1]
+    test_start_date = test_dates[0]
+    # test_end_date = (test_start_date + pd.DateOffset(month = 3)).replace(day = monthrange((test_start_date + pd.DateOffset(month = 3)).year, (test_start_date + pd.DateOffset(month = 3)).month)[1])
+    test_end_date = test_dates[test_dates.strftime('%Y-%m') < (test_start_date + pd.DateOffset(months=3)).strftime('%Y-%m')][-1]
+    n_rebalance_freq = len(pd.period_range(test_start_date, dt_list[-1], freq='Q')) + 1
+
     
+
     # prepare data
     df_period_train = df[train_start_date: train_end_date]
     df_period_test = df[test_start_date: test_end_date]
@@ -114,10 +122,10 @@ if __name__ == "__main__":
             adjustment = breach_check(v1, v2)
             
             if adjustment:
-                print("v1: "+ str(v1))
-                print("v2: "+ str(v1))
-                print("difference: "+ str((v1 - v2) / 2))
-                print("adjustment amout: " + str(adjustment))
+                # print("v1: "+ str(v1))
+                # print("v2: "+ str(v1))
+                # print("difference: "+ str((v1 - v2) / 2))
+                # print("adjustment amout: " + str(adjustment))
                 if v1 > v2:
                     acc_gen_CAD.send(-adjustment)
                     acc_gen_USD.send(adjustment)
@@ -126,11 +134,14 @@ if __name__ == "__main__":
                     acc_gen_USD.send(-adjustment)
         
         # shift rolling window
-        test_start_date = test_end_date + timedelta(days = 1)
-        test_end_date = test_start_date + timedelta(weeks = rebalance_freq)
-        train_start_date = test_start_date - timedelta(weeks = rolling_window)
+        # print("test dates: {}, \n test end date: {}".format(test_dates, test_end_date))
+        if test_dates[-1] == test_end_date:
+            break
+        test_start_date = test_dates[test_dates > test_end_date][0]
+        test_end_date = test_dates[test_dates.strftime('%Y-%m') < (test_start_date + pd.DateOffset(months=3)).strftime('%Y-%m')][-1]
+        train_start_date = test_start_date - pd.DateOffset(month = 3)
         train_end_date = test_start_date - timedelta(days = 1)
-        
+        # print(test_start_date, test_end_date)
         # re-slice data
         df_period_train = df[train_start_date: train_end_date]
         timeseriesUSD = df_period_train[ASSET_UNIVERSE_USD].values
@@ -168,19 +179,22 @@ if __name__ == "__main__":
         # pre_weight_usd = weightUSD
         # pre_weight_cad = weightCAD
         
-        if i % (INJECTION_FREQ / rebalance_freq) == 0 and i != 0:
+        if i % (INJECTION_FREQ / rebalance_freq) == 0:
             acc_gen_CAD.send(5000)
             try:
                 acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             except KeyError:
                 acc_gen_USD.send(5000 / df_fx.loc[nearest(df_fx.index, test_start_date)])
-            print('injection = ' + str(i))
-            
-  
+            # print('injection = ' + str(i))
+    
+    len(acc_CAD_val_list)
+    len(acc_USD_val_list)
+    len(test_dates)
     plt.plot(acc_CAD_val_list, label = 'accountCAD')
     plt.plot(acc_USD_val_list, label = 'accountUSD')
     plt.legend()
-    plt.show()
+    # plt.show()
+    print("--- %s seconds ---" % (time.time() - start_time))
         
 
                 
