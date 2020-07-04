@@ -51,14 +51,18 @@ if __name__ == "__main__":
     
     # injection frequency = half year
     INJECTION_FREQ = 6
+    
+    # start date & end_date
+    start_date = '2010-01-01'
+    end_date = '2014-12-31'
 
     #load data
-    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start='2010-01-01', end='2014-12-31')      
+    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start=start_date, end=end_date)      
     df = df['Adj Close']
     dt_list = list(df.index)
     
     # FX
-    df_fx = yf.download("CAD=X", start='2010-01-01', end='2014-12-31')
+    df_fx = yf.download("CAD=X", start=start_date, end=end_date)
     df_fx = df_fx['Adj Close']
     
     # join two dataframes
@@ -220,7 +224,7 @@ if __name__ == "__main__":
 
     # download data & data clearning
     factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
-    factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
+    factor_df = yf.download(factor_list, start=start_date, end=end_date)     
     factor_df = factor_df['Adj Close']
     factor_df.dropna(axis=0, how="any", inplace=True)  
     factor_ret_df = factor_df.loc[:, factor_df.columns != "^IRX"].pct_change()
