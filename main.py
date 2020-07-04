@@ -219,6 +219,7 @@ def splitted_returns(df, timestamps):
         df_split = df[(df.index >= pre_timestamp) & (df.index < timestamps[i])]
         df_list.append(df_split.pct_change())
         pre_timestamp = timestamps[i]
+    df_list.append(df[(df.index >= pre_timestamp)].pct_change())
     return_df = pd.concat(df_list)
     return_df.dropna(axis=0, how="any", inplace=True)
     return return_df
