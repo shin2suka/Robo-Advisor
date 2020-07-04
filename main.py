@@ -8,6 +8,7 @@ import yfinance as yf
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 import calendar
+import statsmodels.api as sm
 from pypfopt import EfficientFrontier
 from pypfopt import risk_models
 from pypfopt import expected_returns
@@ -25,6 +26,18 @@ def _get_tickers():
 
 def nearest(items, pivot):
     return min(items, key=lambda x: abs(x - pivot))
+
+def splitted_returns(df, timestamps):
+    pre_timestamp = df.index[0]
+    df_list = list()
+    for i in range(len(timestamps)):
+        df_split = df[(df.index >= pre_timestamp) & (df.index < timestamps[i])]
+        df_list.append(df_split.pct_change())
+        pre_timestamp = timestamps[i]
+    df_list.append(df[(df.index >= pre_timestamp)].pct_change())
+    return_df = pd.concat(df_list)
+    return_df.dropna(axis=0, how="any", inplace=True)
+    return return_df
 
 def main():
     df = load_data(*_get_tickers())
@@ -148,8 +161,7 @@ if __name__ == "__main__":
         train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1] 
         train_start_date = train_end_date - relativedelta(months = rolling_window - 1)
         train_start_date = [x for x in dt_list if x.month == train_start_date.month and x.year == train_start_date.year][0] 
-        
-        
+           
         # re-slice data
         df_period_train = df[train_start_date: train_end_date]
         timeseriesUSD = df_period_train[ASSET_UNIVERSE_USD].values
@@ -185,47 +197,34 @@ if __name__ == "__main__":
         
         # injection (half year)        
         if i % (INJECTION_FREQ / rebalance_freq) == 1:
-            print(test_start_date)
             acc_gen_CAD.send(5000)
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             injection_dates.append(test_start_date)
             # print("injection = " + str(i))
             
-   
     test_time_period = dt_list[_test_start_date_index:]  
     acc_value_df = pd.DataFrame({"accountCAD": acc_CAD_val_list, "accountUSD": acc_USD_val_list}, index = test_time_period)
     
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
+    acc_ret_df = splitted_returns(acc_value_df, injection_dates)
+    print(acc_ret_df)
     # plt.plot(acc_CAD_val_list, label = 'accountCAD')
     # plt.plot(acc_USD_val_list, label = 'accountUSD')   
-    # acc_value_df.plot()
-    # plt.legend()
-    # plt.show()
+    acc_value_df.plot()
+    plt.legend()
+    plt.show()
     
     # factor analysis
 
-    # download data
+    # download data & data clearning
     factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
     factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
     factor_df = factor_df['Adj Close']
-    acc_value_df
+    factor_df.dropna(axis=0, how="any", inplace=True)  
+    factor_df["SP500"] = factor_df['^SP500TR'].pct_change()
+    factor_df.dropna(axis=0, how="any", inplace=True)
     
-
-def splitted_returns(df, timestamps):
-    pre_timestamp = df.index[0]
-    df_list = list()
-    for i in range(len(timestamps)):
-        df_split = df[(df.index >= pre_timestamp) & (df.index < timestamps[i])]
-        df_list.append(df_split.pct_change())
-        pre_timestamp = timestamps[i]
-    df_list.append(df[(df.index >= pre_timestamp)].pct_change())
-    return_df = pd.concat(df_list)
-    return_df.dropna(axis=0, how="any", inplace=True)
-    return return_df
-print(splitted_returns(acc_value_df, injection_dates))
-   
-        
 
                 
             
