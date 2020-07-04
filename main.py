@@ -207,8 +207,9 @@ if __name__ == "__main__":
     
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
+    acc_value_df['portfolio'] = acc_value_df['accountUSD_CADHDG'] + acc_value_df['accountCAD']
+    # calculate return 
     acc_ret_df = splitted_returns(acc_value_df, injection_dates)
-    print(acc_ret_df)
     # plt.plot(acc_CAD_val_list, label = 'accountCAD')
     # plt.plot(acc_USD_val_list, label = 'accountUSD')   
     acc_value_df.plot()
@@ -222,8 +223,20 @@ if __name__ == "__main__":
     factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
     factor_df = factor_df['Adj Close']
     factor_df.dropna(axis=0, how="any", inplace=True)  
-    factor_df["SP500"] = factor_df['^SP500TR'].pct_change()
-    factor_df.dropna(axis=0, how="any", inplace=True)
+    factor_ret_df = factor_df.loc[:, factor_df.columns != "^IRX"].pct_change()
+    # factor_ret_df = factor_ret_df.join(factor_df["^IRX"] / 100)
+    factor_ret_df.dropna(axis=0, how="any", inplace=True)
+    
+    # join factor df with return df
+    OLS_df = acc_ret_df.join(factor_ret_df, how = "inner")
+    OLS_df = OLS_df.join(factor_df['^IRX'], how = "inner")
+    
+    # linear regression
+    Y = OLS_df['portfolio']  - (OLS_df["^IRX"] / 100) # substract risk free rate
+    X = OLS_df[["^VIX", "^SP500TR", "CAD=X"]]
+    X = sm.add_constant(X)
+    model = sm.OLS(Y,X).fit()
+    print(model.summary())
     
 
                 
