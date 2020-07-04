@@ -15,7 +15,7 @@ def maxdrawdown(timeseries, start=0, end=None):
 def get_performance(returns, risk_free):
     
     def CAGR(x):
-        return np.cumprod(1 + x)[-1]**(1/len(x)) - 1
+        return np.cumprod(1 + x)[-1]**(252/len(x)) - 1
     
     price = np.cumprod(1+returns)
     print(price)
@@ -26,7 +26,7 @@ def get_performance(returns, risk_free):
     
     stats = {}
     stats["CAGR"] = round(CAGR(returns), 5)
-    stats["vol"] = round(np.std(returns), 5)
+    stats["vol"] = round(np.std(returns)*np.sqrt(12), 5)
     stats["Sharpe"] = round(CAGR(returns) / stats["vol"], 5)
     stats["skew"] = round(float(skew(returns)), 5)
     stats["maxDD"] = round(maxdrawdown(returns), 5)

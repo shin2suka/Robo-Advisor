@@ -98,6 +98,8 @@ if __name__ == "__main__":
     accountUSD = Account("USD", 50000 / df_fx.loc[test_start_date] - len(ASSET_UNIVERSE_USD) * 5, portfolio_USD)
     accountCAD = Account("CAD", 50000 - len(ASSET_UNIVERSE_CAD) * 5, portfolio_CAD)
     
+    # initialize injection dates
+    injection_dates = []
     
     for i in range(n_rebalance_freq):
         
@@ -186,7 +188,8 @@ if __name__ == "__main__":
             print(test_start_date)
             acc_gen_CAD.send(5000)
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
-            print("injection = " + str(i))
+            injection_dates.append(test_start_date)
+            # print("injection = " + str(i))
             
    
     test_time_period = dt_list[_test_start_date_index:]  
@@ -196,9 +199,9 @@ if __name__ == "__main__":
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
     # plt.plot(acc_CAD_val_list, label = 'accountCAD')
     # plt.plot(acc_USD_val_list, label = 'accountUSD')   
-    acc_value_df.plot()
-    plt.legend()
-    plt.show()
+    # acc_value_df.plot()
+    # plt.legend()
+    # plt.show()
     
     # factor analysis
 
@@ -206,12 +209,20 @@ if __name__ == "__main__":
     factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
     factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
     factor_df = factor_df['Adj Close']
-    
-    
-    
-    
+    acc_value_df
     
 
+def splitted_returns(df, timestamps):
+    pre_timestamp = df.index[0]
+    df_list = list()
+    for i in range(len(timestamps)):
+        df_split = df[(df.index >= pre_timestamp) & (df.index < timestamps[i])]
+        df_list.append(df_split.pct_change())
+        pre_timestamp = timestamps[i]
+    return_df = pd.concat(df_list)
+    return_df.dropna(axis=0, how="any", inplace=True)
+    return return_df
+print(splitted_returns(acc_value_df, injection_dates))
    
         
 
