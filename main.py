@@ -138,10 +138,10 @@ if __name__ == "__main__":
         test_start_date = test_end_date + relativedelta(months = 1)
         
         test_start_date =  [x for x in dt_list if x.month == test_start_date.month and x.year == test_start_date.year][0] 
-        print(test_start_date)
+        # print(test_start_date)
         test_end_date = test_start_date + relativedelta(months = rebalance_freq - 1)
         test_end_date = [x for x in dt_list if x.month == test_end_date.month and x.year == test_end_date.year][-1] 
-        print(test_end_date)
+        # print(test_end_date)
         train_end_date = test_start_date - relativedelta(months = 1)
         train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1] 
         train_start_date = train_end_date - relativedelta(months = rolling_window - 1)
@@ -183,18 +183,33 @@ if __name__ == "__main__":
         
         # injection (half year)        
         if i % (INJECTION_FREQ / rebalance_freq) == 1:
+            print(test_start_date)
             acc_gen_CAD.send(5000)
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             print("injection = " + str(i))
             
    
-    test_time_period = dt_list[_test_start_date_index:]
+    test_time_period = dt_list[_test_start_date_index:]  
     acc_value_df = pd.DataFrame({"accountCAD": acc_CAD_val_list, "accountUSD": acc_USD_val_list}, index = test_time_period)
+    
+    # convert USD to CAD
+    acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
     # plt.plot(acc_CAD_val_list, label = 'accountCAD')
-    # plt.plot(acc_USD_val_list, label = 'accountUSD')
+    # plt.plot(acc_USD_val_list, label = 'accountUSD')   
     acc_value_df.plot()
     plt.legend()
     plt.show()
+    
+    # factor analysis
+
+    # download data
+    factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
+    factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
+    factor_df = factor_df['Adj Close']
+    
+    
+    
+    
     
 
    
