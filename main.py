@@ -8,6 +8,7 @@ import yfinance as yf
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 import calendar
+import statsmodels.api as sm
 from pypfopt import EfficientFrontier
 from pypfopt import risk_models
 from pypfopt import expected_returns
@@ -146,8 +147,7 @@ if __name__ == "__main__":
         train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1] 
         train_start_date = train_end_date - relativedelta(months = rolling_window - 1)
         train_start_date = [x for x in dt_list if x.month == train_start_date.month and x.year == train_start_date.year][0] 
-        
-        
+           
         # re-slice data
         df_period_train = df[train_start_date: train_end_date]
         timeseriesUSD = df_period_train[ASSET_UNIVERSE_USD].values
@@ -188,7 +188,6 @@ if __name__ == "__main__":
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             print("injection = " + str(i))
             
-   
     test_time_period = dt_list[_test_start_date_index:]  
     acc_value_df = pd.DataFrame({"accountCAD": acc_CAD_val_list, "accountUSD": acc_USD_val_list}, index = test_time_period)
     
@@ -202,10 +201,22 @@ if __name__ == "__main__":
     
     # factor analysis
 
-    # download data
+    # download data & data clearning
     factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
     factor_df = yf.download(factor_list, start='2010-01-01', end='2014-12-31')     
     factor_df = factor_df['Adj Close']
+    factor_df.dropna(axis=0, how="any", inplace=True)  
+    factor_df["SP500"] = factor_df['^SP500TR'].pct_change()
+    factor_df.dropna(axis=0, how="any", inplace=True)
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
