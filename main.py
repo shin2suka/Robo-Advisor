@@ -7,10 +7,12 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
+from scipy import stats
 import calendar
 import statsmodels.api as sm
 import time
 from copulas.multivariate import GaussianMultivariate
+from copulas.visualization import scatter_2d
 # from pypfopt import EfficientFrontier
 # from pypfopt import risk_models
 # from pypfopt import expected_returns
@@ -39,6 +41,16 @@ def splitted_returns(df, timestamps):
     return_df = pd.concat(df_list)
     return_df.dropna(axis=0, how="any", inplace=True)
     return return_df
+
+def copula_sample_one_var_fixed(var_value, var_name, copula_obj):
+    res = dict()
+    tmp = zip(copula_obj.columns, copula_obj.univariates)
+    tmp = [x for x in tmp if x[0] != var_name]
+    for i, (column_name, univariate) in enumerate(tmp):
+        cdf = stats.norm.cdf(var_value)
+        j = univariate.percent_point(cdf).item(0)
+        res[column_name] = j
+    return res
 
 def main():
     df = load_data(*_get_tickers())
@@ -213,10 +225,13 @@ if __name__ == "__main__":
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
     acc_value_df['portfolio'] = acc_value_df['accountUSD_CADHDG'] + acc_value_df['accountCAD']
-    # calculate return 
-    acc_ret_df = splitted_returns(acc_value_df, injection_dates)
-    # plt.plot(acc_CAD_val_list, label = 'accountCAD')
-    # plt.plot(acc_USD_val_list, label = 'accountUSD')   
+    
+    # calculate daily return 
+    acc_ret_df_d = splitted_returns(acc_value_df, injection_dates)
+
+    # calculate quartly return
+    acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
+    
     acc_value_df.plot()
     plt.legend()
     plt.show()
@@ -233,7 +248,7 @@ if __name__ == "__main__":
     factor_ret_df.dropna(axis=0, how="any", inplace=True)
     
     # join factor df with return df
-    OLS_df = acc_ret_df.join(factor_ret_df, how = "inner")
+    OLS_df = acc_ret_df_d.join(factor_ret_df, how = "inner")
     OLS_df = OLS_df.join(factor_df['^IRX'], how = "inner")
     
     # linear regression
