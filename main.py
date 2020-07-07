@@ -9,11 +9,12 @@ from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 import calendar
 import statsmodels.api as sm
-from pypfopt import EfficientFrontier
-from pypfopt import risk_models
-from pypfopt import expected_returns
-from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 import time
+from copulas.multivariate import GaussianMultivariate
+# from pypfopt import EfficientFrontier
+# from pypfopt import risk_models
+# from pypfopt import expected_returns
+# from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 
 def _get_tickers():
     if CLIENTS_INFO["risk_level"] == "high":
@@ -241,6 +242,28 @@ if __name__ == "__main__":
     X = sm.add_constant(X)
     model = sm.OLS(Y,X).fit()
     print(model.summary())
+    
+    # copula & joint distribution
+    copula = GaussianMultivariate()
+    copula.fit(factor_ret_df)
+    samples_from_copula = copula.sample(100)
+    
+    # VaR
+    samples_ret = model.predict(sm.add_constant(samples_from_copula))
+    percentile = 1
+    VaR_ret = np.percentile(samples_ret, percentile)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 
                 
