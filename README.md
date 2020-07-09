@@ -21,6 +21,12 @@ python main.py
 
 ### TO DO:
 Urgent:
+1. MVO doesn't work (no idea why and how)
+2. portfolio composition and allocation chart
+3. time/money weighted stats
+4. risk models and senarios
 
 
 Non-urgent:
+1. investment report
+2. technical report
