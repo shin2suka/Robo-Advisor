@@ -3,6 +3,7 @@ from configs.inputs import *
 from backtest.backtest import *
 from models.MVO import *
 from models.Robust_MVO import *
+from models.ERCRiskParity import ERCRiskParity
 import matplotlib.pyplot as plt
 import yfinance as yf
 from datetime import datetime, timedelta, date
@@ -114,10 +115,18 @@ if __name__ == "__main__":
     timeseriesCAD = df_period_train[ASSET_UNIVERSE_CAD].values
     
     # portfolio optimize
-    mvoUSD = MVPort(timeseriesUSD)
-    mvoCAD = MVPort(timeseriesCAD)
-    weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.1, return_timeseries=False)
-    weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.1, return_timeseries=False)
+    erc_rp = ERCRiskParity()
+    # mvoUSD = MVPort(timeseriesUSD)
+    # mvoCAD = MVPort(timeseriesCAD)
+    # weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.1, return_timeseries=False)
+    # weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.1, return_timeseries=False)
+    initial_weights = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
+    risk_target_percent = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
+    weightUSD = erc_rp.get_signal(timeseriesUSD, initial_weights, risk_target_percent, False)
+    
+    initial_weights = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
+    risk_target_percent = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
+    weightCAD = erc_rp.get_signal(timeseriesCAD, initial_weights, risk_target_percent, False)
     
     # array to dict
     portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
@@ -186,14 +195,24 @@ if __name__ == "__main__":
         df_period_test = df[test_start_date: test_end_date]
         
         # portfolio optimize
-        mvoUSD = Robust_MVPort(timeseriesUSD)
-        mvoCAD = Robust_MVPort(timeseriesCAD)
-        weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
-        weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
+        # mvoUSD = Robust_MVPort(timeseriesUSD)
+        # mvoCAD = Robust_MVPort(timeseriesCAD)
+        # weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
+        # weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
+        initial_weights = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
+        risk_target_percent = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
+        weightUSD = erc_rp.get_signal(timeseriesUSD, initial_weights, risk_target_percent, False)
+        
+        initial_weights = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
+        risk_target_percent = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
+        weightCAD = erc_rp.get_signal(timeseriesCAD, initial_weights, risk_target_percent, False)
         
         # previous portfolio weight
         pre_weight_CAD = np.array(list(accountCAD.get_weight().values()))
         pre_weight_USD = np.array(list(accountUSD.get_weight().values()))
+        print(pre_weight_USD)
+        print('----------------------')
+        print(pre_weight_CAD)
                 
         # calculate t cost for each turnover
         temp1 = abs(weightUSD - pre_weight_USD)
