@@ -16,6 +16,7 @@ df_avg_returns = pd.read_csv(DATA_PATH.joinpath("df_avg_returns.csv"))
 df_after_tax = pd.read_csv(DATA_PATH.joinpath("df_after_tax.csv"))
 df_recent_returns = pd.read_csv(DATA_PATH.joinpath("df_recent_returns.csv"))
 df_graph = pd.read_csv(DATA_PATH.joinpath("df_graph.csv"))
+df_port = pd.read_csv(DATA_PATH.joinpath("df_port.csv"))
 
 
 def create_layout(app):
@@ -55,27 +56,41 @@ def create_layout(app):
                         [
                             html.Div(
                                 [
-                                    html.H6("Performance", className="subtitle padded"),
+                                    html.H6("Growth of $100K", className="subtitle padded"),
                                     dcc.Graph(
                                         id="graph-4",
                                         figure={
                                             "data": [
                                                 go.Scatter(
-                                                    x=df_graph["Date"],
-                                                    y=df_graph["Calibre Index Fund"],
+                                                    x=df_port["Date"],
+                                                    y=df_port["accountCAD"],
                                                     line={"color": "#97151c"},
                                                     mode="lines",
-                                                    name="DQN",
+                                                    name="CAD Account",
                                                 ),
                                                 go.Scatter(
-                                                    x=df_graph["Date"],
-                                                    y=df_graph[
-                                                        "MSCI EAFE Index Fund (ETF)"
-                                                    ],
-                                                    line={"color": "#b5b5b5"},
+                                                    x=df_port["Date"],
+                                                    y=df_port["accountUSD"],
+                                                    line={"color": "#97150c"},
                                                     mode="lines",
-                                                    name="MSCI EAFE Index Fund (ETF)",
+                                                    name="USD Account",
                                                 ),
+                                                go.Scatter(
+                                                    x=df_port["Date"],
+                                                    y=df_port["portfolio"],
+                                                    line={"color": "#97140c"},
+                                                    mode="lines",
+                                                    name="All-weather Portfolio",
+                                                ),
+                                                # go.Scatter(
+                                                #     x=df_graph["Date"],
+                                                #     y=df_graph[
+                                                #         "MSCI EAFE Index Fund (ETF)"
+                                                #     ],
+                                                #     line={"color": "#b5b5b5"},
+                                                #     mode="lines",
+                                                #     name="MSCI EAFE Index Fund (ETF)",
+                                                # ),
                                             ],
                                             "layout": go.Layout(
                                                 autosize=True,
@@ -118,12 +133,12 @@ def create_layout(app):
                                                                 "label": "5Y",
                                                                 "step": "year",
                                                             },
-                                                            {
-                                                                "count": 10,
-                                                                "label": "10Y",
-                                                                "step": "year",
-                                                                "stepmode": "backward",
-                                                            },
+                                                            # {
+                                                            #     "count": 10,
+                                                            #     "label": "10Y",
+                                                            #     "step": "year",
+                                                            #     "stepmode": "backward",
+                                                            # },
                                                             {
                                                                 "label": "All",
                                                                 "step": "all",

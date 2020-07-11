@@ -12,8 +12,11 @@ PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../data").resolve()
 
 
-df_fund_facts = pd.read_csv(DATA_PATH.joinpath("df_fund_facts.csv"))
-df_price_perf = pd.read_csv(DATA_PATH.joinpath("df_price_perf.csv"))
+df_allocations = pd.read_csv(DATA_PATH.joinpath("df_allocations.csv"))
+df_essentials = pd.read_csv(DATA_PATH.joinpath("df_essentials.csv"))
+df_port = pd.read_csv(DATA_PATH.joinpath("df_port.csv"))
+df_holdings = pd.read_csv(DATA_PATH.joinpath("df_holdings.csv"))
+df_benchmark = pd.read_csv(DATA_PATH.joinpath("df_benchmark.csv"))
 
 
 def create_layout(app):
@@ -29,11 +32,11 @@ def create_layout(app):
                         [
                             html.Div(
                                 [
-                                    html.H5("Algorithm Summary"),
+                                    html.H5("Investment Objective"),
                                     html.Br([]),
                                     html.P(
                                         "\
-                                    Currently, only deep Q learning algorithm has been implemented with many bugs. We will lose millions of money if we use this stupid trading algorithm. As such, being philanthropists instead of traders is our new goal.",
+                                    The portfolio's objective is to achieve a balance of current income and long-term capital appreciation, with a small bias towards capital appreciation. It invests primarily in a diversified mix of equity, fixed income and commodity managed by us and by other ETF fund managers.",
                                         style={"color": "#ffffff"},
                                         className="row",
                                     ),
@@ -43,22 +46,38 @@ def create_layout(app):
                         ],
                         className="row",
                     ),
-                    # Row 4
+                    # Row 1
                     html.Div(
                         [
                             html.Div(
                                 [
-                                    html.H6(
-                                        ["Fund Facts"], className="subtitle padded"
+                                    html.H6(["Reasons for Investing"], className="subtitle padded"),
+    
+                                    html.P(
+                                        "• Invests in a mix of ETF diversified by asset\
+                                            class, geographic region, economic sector and\
+                                            investment style, aiming to maximize returns while\
+                                            managing risk."
                                     ),
-                                    html.Table(make_dash_table(df_fund_facts)),
+                                    html.P(
+                                        "• Rigorous portfolio construction by an experienced\
+                                            team combined with regular monitoring and daily\
+                                            cash flow rebalancing help to ensure each portfolio\
+                                            stays on track."
+                                    ),
+                                    html.P(
+                                        "• From creating the optimal asset mix and selecting\
+                                            funds, to their monitoring and rebalancing, each\
+                                            portfolio delivers convenience and simplicity."
+                                    ),
                                 ],
                                 className="six columns",
+                                style={"color": "#696969"},
                             ),
                             html.Div(
                                 [
                                     html.H6(
-                                        "Average annual performance",
+                                        "Average Annual Performance",
                                         className="subtitle padded",
                                     ),
                                     dcc.Graph(
@@ -68,10 +87,10 @@ def create_layout(app):
                                                 go.Bar(
                                                     x=[
                                                         "1 Year",
+                                                        "2 Year",
                                                         "3 Year",
+                                                        "4 Year",
                                                         "5 Year",
-                                                        "10 Year",
-                                                        "41 Year",
                                                     ],
                                                     y=[
                                                         "21.67",
@@ -87,21 +106,22 @@ def create_layout(app):
                                                             "width": 2,
                                                         },
                                                     },
-                                                    name="DQN",
+                                                    name="All-weather Portfolio",
                                                 ),
                                                 go.Bar(
                                                     x=[
                                                         "1 Year",
+                                                        "2 Year",
                                                         "3 Year",
+                                                        "4 Year",
                                                         "5 Year",
-                                                        "10 Year",
-                                                        "41 Year",
                                                     ],
                                                     y=[
                                                         "21.83",
                                                         "11.41",
                                                         "15.79",
                                                         "8.50",
+                                                        "2.5",
                                                     ],
                                                     marker={
                                                         "color": "#dddddd",
@@ -110,7 +130,7 @@ def create_layout(app):
                                                             "width": 2,
                                                         },
                                                     },
-                                                    name="S&P 500 Index",
+                                                    name="HFRI Benchmark",
                                                 ),
                                             ],
                                             "layout": go.Layout(
@@ -158,8 +178,7 @@ def create_layout(app):
                                 className="six columns",
                             ),
                         ],
-                        className="row",
-                        style={"margin-bottom": "35px"},
+                        className="row ",
                     ),
                     # Row 5
                     html.Div(
@@ -260,25 +279,184 @@ def create_layout(app):
                             html.Div(
                                 [
                                     html.H6(
-                                        "Price & Performance (%)",
+                                        "Fund Essentials",
                                         className="subtitle padded",
                                     ),
-                                    html.Table(make_dash_table(df_price_perf)),
+                                    html.Table(make_dash_table(df_essentials)),
+                                ],
+                                className="six columns",
+                            ),
+                            
+                        ],
+                        className="row ",
+                    ),
+                    # Row 4
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.H6(
+                                        ["Allocations (%)"], className="subtitle padded"
+                                    ),
+                                    html.Table(make_dash_table(df_allocations)),
                                 ],
                                 className="six columns",
                             ),
                             html.Div(
                                 [
                                     html.H6(
-                                        "Risk Potential", className="subtitle padded"
+                                        ["Composition"],
+                                        className="subtitle padded",
                                     ),
-                                    html.Img(
-                                        src=app.get_asset_url("risk_reward.png"),
-                                        className="risk-reward",
-                                    ),
+                                    # dcc.Graph(
                                 ],
                                 className="six columns",
                             ),
+                        ],
+                        className="row",
+                        style={"margin-bottom": "35px"},
+                    ),
+                    # Row 2
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.H6("Growth of $100K", className="subtitle padded"),
+                                    dcc.Graph(
+                                        id="graph-4",
+                                        figure={
+                                            "data": [
+                                                go.Scatter(
+                                                    x=df_port["Date"],
+                                                    y=df_port["accountCAD"],
+                                                    line={"color": "#ff9900"},
+                                                    mode="lines",
+                                                    name="CAD Account",
+                                                ),
+                                                go.Scatter(
+                                                    x=df_port["Date"],
+                                                    y=df_port["accountUSD"],
+                                                    line={"color": "#f8e0b0"},
+                                                    mode="lines",
+                                                    name="USD Account",
+                                                ),
+                                                go.Scatter(
+                                                    x=df_port["Date"],
+                                                    y=df_port["portfolio"],
+                                                    line={"color": "#97140c"},
+                                                    mode="lines",
+                                                    name="All-weather Portfolio",
+                                                ),
+                                                go.Scatter(
+                                                    x=df_benchmark["Date"],
+                                                    y=df_benchmark[
+                                                        "HFRI Benchmark"
+                                                    ],
+                                                    line={"color": "#b5b5b5"},
+                                                    mode="lines",
+                                                    name="HFRI Benchmark",
+                                                ),
+                                            ],
+                                            "layout": go.Layout(
+                                                autosize=True,
+                                                width=700,
+                                                height=200,
+                                                font={"family": "Raleway", "size": 10},
+                                                margin={
+                                                    "r": 30,
+                                                    "t": 30,
+                                                    "b": 30,
+                                                    "l": 30,
+                                                },
+                                                showlegend=True,
+                                                titlefont={
+                                                    "family": "Raleway",
+                                                    "size": 10,
+                                                },
+                                                xaxis={
+                                                    "autorange": True,
+                                                    "range": [
+                                                        "2007-12-31",
+                                                        "2018-03-06",
+                                                    ],
+                                                    "rangeselector": {
+                                                        "buttons": [
+                                                            {
+                                                                "count": 1,
+                                                                "label": "1Y",
+                                                                "step": "year",
+                                                                "stepmode": "backward",
+                                                            },
+                                                            {
+                                                                "count": 3,
+                                                                "label": "3Y",
+                                                                "step": "year",
+                                                                "stepmode": "backward",
+                                                            },
+                                                            {
+                                                                "count": 5,
+                                                                "label": "5Y",
+                                                                "step": "year",
+                                                            },
+                                                            # {
+                                                            #     "count": 10,
+                                                            #     "label": "10Y",
+                                                            #     "step": "year",
+                                                            #     "stepmode": "backward",
+                                                            # },
+                                                            {
+                                                                "label": "All",
+                                                                "step": "all",
+                                                            },
+                                                        ]
+                                                    },
+                                                    "showline": True,
+                                                    "type": "date",
+                                                    "zeroline": False,
+                                                },
+                                                yaxis={
+                                                    "autorange": True,
+                                                    "range": [
+                                                        18.6880162434,
+                                                        278.431996757,
+                                                    ],
+                                                    "showline": True,
+                                                    "type": "linear",
+                                                    "zeroline": False,
+                                                },
+                                            ),
+                                        },
+                                        config={"displayModeBar": False},
+                                    ),
+                                ],
+                                className="twelve columns",
+                            )
+                        ],
+                        className="row ",
+                    ),
+                    # Row 4
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.H6(
+                                        [
+                                            "Portfolio Holdings"
+                                        ],
+                                        className="subtitle padded",
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Table(
+                                                make_dash_table(df_holdings),
+                                                className="tiny-header",
+                                            )
+                                        ],
+                                        style={"overflow-x": "auto"},
+                                    ),
+                                ],
+                                className=" twelve columns",
+                            )
                         ],
                         className="row ",
                     ),

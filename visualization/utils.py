@@ -11,10 +11,10 @@ def get_header(app):
         [
             html.Div(
                 [
-                    html.Img(
-                        src=app.get_asset_url("logo.png"),
-                        className="logo",
-                    ),
+                    # html.Img(
+                    #     src=app.get_asset_url("logo.png"),
+                    #     className="logo",
+                    # ),
                     # html.A(
                     #     html.Button("Learn More", id="learn-more-button"),
                     #     href="https://plot.ly/dash/pricing/",
@@ -25,7 +25,7 @@ def get_header(app):
             html.Div(
                 [
                     html.Div(
-                        [html.H5("郑和资本 H Capital")],
+                        [html.H5("Investment Report")],
                         className="seven columns main-title",
                     ),
                     html.Div(
