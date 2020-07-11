@@ -5,6 +5,8 @@ from models.MVO import *
 from models.Robust_MVO import *
 from models.ERCRiskParity import ERCRiskParity
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.ticker as mtick
 import yfinance as yf
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
@@ -67,8 +69,10 @@ if __name__ == "__main__":
     INJECTION_FREQ = 6
     
     # start date & end_date
-    start_date = '2010-01-01'
-    end_date = '2014-12-31'
+    # investment period: 2015.4.1 - 2020.5.31
+    # backtest period: 2010.4.1 - 2015.03.31
+    start_date = '2010-04-01'
+    end_date = '2020-05-31'
 
     #load data
     df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start=start_date, end=end_date)      
@@ -152,7 +156,7 @@ if __name__ == "__main__":
         for j in range(len(df_period_test)):
             
             v1 = next(acc_gen_CAD)
-            v2 = next(acc_gen_USD) * FX_arr[j]
+            v2 = next(acc_gen_USD) 
             
             acc_CAD_val_list.append(v1)
             acc_USD_val_list.append(v2)
@@ -181,7 +185,9 @@ if __name__ == "__main__":
         test_start_date =  [x for x in dt_list if x.month == test_start_date.month and x.year == test_start_date.year][0] 
         # print(test_start_date)
         test_end_date = test_start_date + relativedelta(months = rebalance_freq - 1)
-        test_end_date = [x for x in dt_list if x.month == test_end_date.month and x.year == test_end_date.year][-1] 
+        test_end_date = [x for x in dt_list if x.month == test_end_date.month and x.year == test_end_date.year]
+        test_end_date = test_end_date[-1] if test_end_date else dt_list[-1]
+            
         # print(test_end_date)
         train_end_date = test_start_date - relativedelta(months = 1)
         train_end_date = [x for x in dt_list if x.month == train_end_date.month and x.year == train_end_date.year][-1] 
@@ -210,9 +216,6 @@ if __name__ == "__main__":
         # previous portfolio weight
         pre_weight_CAD = np.array(list(accountCAD.get_weight().values()))
         pre_weight_USD = np.array(list(accountUSD.get_weight().values()))
-        print(pre_weight_USD)
-        print('----------------------')
-        print(pre_weight_CAD)
                 
         # calculate t cost for each turnover
         temp1 = abs(weightUSD - pre_weight_USD)
@@ -220,8 +223,8 @@ if __name__ == "__main__":
         t_cost_usd = len(temp1[temp1>0.001]) * 5
         t_cost_cad = len(temp2[temp2>0.001]) * 5
         
-        acc_gen_CAD.send(-t_cost_cad)
-        acc_gen_USD.send(-t_cost_usd)
+        accountCAD.transaction_cost(t_cost_cad)
+        accountUSD.transaction_cost(t_cost_usd)
                
         # portfolio weights array to dict
         portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
@@ -243,7 +246,7 @@ if __name__ == "__main__":
     
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
-    acc_value_df['portfolio'] = acc_value_df['accountUSD_CADHDG'] + acc_value_df['accountCAD']
+    acc_value_df['portfolio'] = acc_value_df['accountUSD'] + acc_value_df['accountCAD']
     
     # calculate daily return 
     acc_ret_df_d = splitted_returns(acc_value_df, injection_dates)
@@ -254,38 +257,71 @@ if __name__ == "__main__":
     acc_value_df.plot()
     plt.legend()
     plt.show()
-    
+#%%    
     # factor analysis
-
-    # download data & data clearning
-    factor_list = ["^VIX", "^IRX", "^SP500TR", "CAD=X"]
-    factor_df = yf.download(factor_list, start=start_date, end=end_date)     
-    factor_df = factor_df['Adj Close']
-    factor_df.dropna(axis=0, how="any", inplace=True)  
-    factor_ret_df = factor_df.loc[:, factor_df.columns != "^IRX"].pct_change()
-    # factor_ret_df = factor_ret_df.join(factor_df["^IRX"] / 100)
+    factor_df = pd.read_excel('C:\\Users\\zhong\\Documents\\MMF\\Risk Management Lab\\Robo-Advisor\\data\\factor data.xlsx', header=0)
+    factor_df.index = factor_df['DATE']
+    del factor_df['DATE']
+    
+    # factor return
+    factor_ret_df = factor_df.pct_change()
     factor_ret_df.dropna(axis=0, how="any", inplace=True)
     
-    # join factor df with return df
-    OLS_df = acc_ret_df_d.join(factor_ret_df, how = "inner")
-    OLS_df = OLS_df.join(factor_df['^IRX'], how = "inner")
-    
-    # linear regression
-    Y = OLS_df['portfolio']  - (OLS_df["^IRX"] / 100) # substract risk free rate
-    X = OLS_df[["^VIX", "^SP500TR", "CAD=X"]]
-    X = sm.add_constant(X)
+    # factor model   
+    X = sm.add_constant(factor_ret_df.loc['2011-04-01': '2020-04-01'])
+    Y = acc_ret_df_q['portfolio'].values
     model = sm.OLS(Y,X).fit()
     print(model.summary())
     
-    # copula & joint distribution
-    copula = GaussianMultivariate()
-    copula.fit(factor_ret_df)
-    samples_from_copula = copula.sample(100)
+    # scenario analysis
     
-    # VaR
-    samples_ret = model.predict(sm.add_constant(samples_from_copula))
-    percentile = 1
-    VaR_ret = np.percentile(samples_ret, percentile)
+    # scenario 1: 1997-1999 Asia crisis and Russia sovereign boond default
+    # time period: '1997-01-01', '1999-01-01'
+    factor_s1 = factor_ret_df.loc['1997-01-01': '1999-01-01']
+    portf_ret_pred = model.predict(sm.add_constant(factor_s1))
+    portf_ret_pred = portf_ret_pred.groupby(pd.PeriodIndex(portf_ret_pred.index, freq='Q'), axis=0).min()
+    portf_ret_pred = portf_ret_pred.to_frame('return')
+    portf_ret_pred['group'] = 1
+    
+    
+    # scenario 2: 911 
+    # time period: '2001-07-01', '2001-10-01'
+    factor_s2 = factor_ret_df.loc['2001-07-01': '2001-10-01']
+    portf_ret_pred_i = model.predict(sm.add_constant(factor_s2))
+    portf_ret_pred_i = portf_ret_pred_i.groupby(pd.PeriodIndex(portf_ret_pred_i.index, freq='Q'), axis=0).min()
+    portf_ret_pred_i = portf_ret_pred_i.to_frame('return')
+    portf_ret_pred_i['group'] = 2
+    portf_ret_pred = portf_ret_pred.append(portf_ret_pred_i)
+    # portf_ret_pred.groupby(pd.PeriodIndex(portf_ret_pred.index, freq='Q'), axis=0).min().plot(kind='bar')
+    
+    # scenario 3: great financial crisis
+    # time period: '2007-10-01', '2009-04-01'
+    factor_s3 = factor_ret_df.loc['2007-10-01': '2009-04-01']
+    portf_ret_pred_i = model.predict(sm.add_constant(factor_s3))
+    portf_ret_pred_i = portf_ret_pred_i.groupby(pd.PeriodIndex(portf_ret_pred_i.index, freq='Q'), axis=0).min()
+    portf_ret_pred_i = portf_ret_pred_i.to_frame('return')
+    portf_ret_pred_i['group'] = 3
+    portf_ret_pred = portf_ret_pred.append(portf_ret_pred_i)
+    # portf_ret_pred.groupby(pd.PeriodIndex(portf_ret_pred.index, freq='Q'), axis=0).min().plot(kind='bar')
+    
+    # scenrio 4: covid-19
+    # time period: '2020-01-01', '2020-04-01'
+    factor_s4 = factor_ret_df.loc['2020-01-01': '2020-04-01']
+    portf_ret_pred_i = model.predict(sm.add_constant(factor_s4))
+    portf_ret_pred_i = portf_ret_pred_i.groupby(pd.PeriodIndex(portf_ret_pred_i.index, freq='Q'), axis=0).min()
+    portf_ret_pred_i = portf_ret_pred_i.to_frame('return')
+    portf_ret_pred_i['group'] = 4
+    portf_ret_pred = portf_ret_pred.append(portf_ret_pred_i)
+    
+    colors = {1: '#833ab4', 2: '#fd1d1d', 3: '#fcb045', 4: '#fc466b'}
+    
+    s1 = mpatches.Patch(color='#833ab4', label='scenario 1')
+    s2 = mpatches.Patch(color='#fd1d1d', label='scenario 2')
+    s3 = mpatches.Patch(color='#fcb045', label='scenario 3')
+    s4 = mpatches.Patch(color='#fc466b', label='scenario 4')
+    plt.legend(handles=[s1, s2, s3, s4], loc=2)
+    ax = (100 * portf_ret_pred['return']).plot(kind='bar', color=[colors[i] for i in portf_ret_pred['group']], rot =45)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     
     
     

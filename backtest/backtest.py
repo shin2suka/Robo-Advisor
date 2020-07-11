@@ -43,6 +43,8 @@ class Account:
             else:
                 i += 1
                 
+    def transaction_cost(self, cost):
+        self.__value -= cost
 
     def rebalance_active(self, new_portfolio):
         """
