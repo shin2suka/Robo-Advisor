@@ -62,8 +62,11 @@ def main():
 if __name__ == "__main__":
     
     # USD/CAD account asset universe
-    ASSET_UNIVERSE_USD = ["BND", "VTI", "EFA", "VWO", "USO", "GLD"] 
-    ASSET_UNIVERSE_CAD = ["XBB.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HOU.TO", "HUG.TO"]
+    # real estate etf: VNQ(USD), XRE.TO(CAD)
+    # Govn bond etf: XGB.TO(CAD), GOVT(USD)
+    # high yield bond etf: XHY.TO(CAD), HYG(USD)
+    ASSET_UNIVERSE_USD = ["GOVT", "HYG", "VTI", "EFA", "VWO","GLD", "VNQ"] 
+    ASSET_UNIVERSE_CAD = ["XGB.TO", "XHY.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HUG.TO", "XRE.TO"]
     
     # injection frequency = half year
     INJECTION_FREQ = 6
@@ -71,7 +74,7 @@ if __name__ == "__main__":
     # start date & end_date
     # investment period: 2015.4.1 - 2020.5.31
     # backtest period: 2010.4.1 - 2015.03.31
-    start_date = '2010-04-01'
+    start_date = '2014-04-01'
     end_date = '2020-05-31'
 
     #load data
@@ -91,7 +94,7 @@ if __name__ == "__main__":
     df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     
     # rolling window & rebalance frequency (both in months)
-    rolling_window = 12
+    rolling_window = 6
     rebalance_freq = 3
     
     # two lists to record account value
@@ -246,7 +249,7 @@ if __name__ == "__main__":
     
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
-    acc_value_df['portfolio'] = acc_value_df['accountUSD'] + acc_value_df['accountCAD']
+    acc_value_df['portfolio'] = acc_value_df['accountUSD_CADHDG'] + acc_value_df['accountCAD']
     
     # calculate daily return 
     acc_ret_df_d = splitted_returns(acc_value_df, injection_dates)
@@ -282,7 +285,6 @@ if __name__ == "__main__":
     portf_ret_pred = portf_ret_pred.groupby(pd.PeriodIndex(portf_ret_pred.index, freq='Q'), axis=0).min()
     portf_ret_pred = portf_ret_pred.to_frame('return')
     portf_ret_pred['group'] = 1
-    
     
     # scenario 2: 911 
     # time period: '2001-07-01', '2001-10-01'
