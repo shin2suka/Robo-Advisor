@@ -56,16 +56,16 @@ def get_menu():
                 href="/dash-financial-report/overview",
                 className="tab first",
             ),
-            dcc.Link(
-                "Price Performance",
-                href="/dash-financial-report/price-performance",
-                className="tab",
-            ),
-            dcc.Link(
-                "Portfolio & Management",
-                href="/dash-financial-report/portfolio-management",
-                className="tab",
-            ),
+            # dcc.Link(
+            #     "Price Performance",
+            #     href="/dash-financial-report/price-performance",
+            #     className="tab",
+            # ),
+            # dcc.Link(
+            #     "Portfolio & Management",
+            #     href="/dash-financial-report/portfolio-management",
+            #     className="tab",
+            # ),
         ],
         className="row all-tabs",
     )
