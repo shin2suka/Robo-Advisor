@@ -30,3 +30,6 @@ Urgent:
 Non-urgent:
 1. investment report
 2. technical report
+
+Bugs:
+1. half-year doesn't work (end date=2020-05-31)

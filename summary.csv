@@ -1,0 +1,31 @@
+                      OLS Regression Results                     
+Dep. Variable:   ,y               ,  R-squared:         ,   0.748
+Model:           ,OLS             ,  Adj. R-squared:    ,   0.651
+Method:          ,Least Squares   ,  F-statistic:       ,   7.726
+Date:            ,Sat, 11 Jul 2020,  Prob (F-statistic):,1.34e-05
+Time:            ,12:31:17        ,  Log-Likelihood:    ,  85.184
+No. Observations:,    37          ,  AIC:               ,  -148.4
+Df Residuals:    ,    26          ,  BIC:               ,  -130.6
+Df Model:        ,    10          ,                     ,        
+Covariance Type: ,nonrobust       ,                     ,        
+        ,   coef   , std err ,    t    ,P>|t| ,  [0.025 ,  0.975] 
+const   ,   -0.0055,    0.016,   -0.340, 0.736,   -0.038,    0.027
+BAA10Y  ,   -0.1504,    0.089,   -1.684, 0.104,   -0.334,    0.033
+WTI     ,    0.0463,    0.074,    0.626, 0.537,   -0.106,    0.198
+GOLD    ,    0.4113,    0.114,    3.608, 0.001,    0.177,    0.646
+VIX     ,   -0.0760,    0.026,   -2.958, 0.007,   -0.129,   -0.023
+CADUS   ,    0.3539,    0.231,    1.529, 0.138,   -0.122,    0.830
+SP500   ,    0.1637,    0.204,    0.801, 0.430,   -0.256,    0.584
+T10Y3M  ,   -0.0026,    0.002,   -1.136, 0.266,   -0.007,    0.002
+UNRATE  ,    0.0353,    0.019,    1.903, 0.068,   -0.003,    0.073
+Real GDP,    1.5393,    1.361,    1.131, 0.268,   -1.258,    4.337
+CPI     ,   -0.5486,    2.582,   -0.213, 0.833,   -5.855,    4.758
+Omnibus:      , 0.311,  Durbin-Watson:     ,   1.963
+Prob(Omnibus):, 0.856,  Jarque-Bera (JB):  ,   0.409
+Skew:         , 0.195,  Prob(JB):          ,   0.815
+Kurtosis:     , 2.663,  Cond. No.          ,1.22e+03
+
+Warnings:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The condition number is large, 1.22e+03. This might indicate that there are
+strong multicollinearity or other numerical problems.
