@@ -1,4 +1,4 @@
-# Robo Advisor Portfolio Management System - V1.0.0
+# Robo Advisor Portfolio Management System - V2.0.0
 
 Clone the git repo, then install the requirements with pip
 
@@ -21,15 +21,16 @@ python main.py
 
 ### TO DO:
 Urgent:
-1. MVO doesn't work (no idea why and how)
-2. portfolio composition and allocation chart
-3. time/money weighted stats
-4. risk models and senarios
-
+1. portfolio composition pie chart
 
 Non-urgent:
-1. investment report
-2. technical report
+1. investment report (on-going)
+2. technical report (on-going)
 
 Bugs:
-1. half-year doesn't work (end date=2020-05-31)
+1.None
+  solved:
+  1. half-year doesn't work (end date=2020-05-31)
+  2. MVO doesn't work (no idea why and how)
+  3. risk models and senarios
+  4. time/money weighted stats
