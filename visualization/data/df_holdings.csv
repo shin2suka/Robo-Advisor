@@ -1,8 +1,11 @@
 ﻿A,B,C,D,E
 Asset Class,CAD,ticker,USD,ticker
-Fixed Income,iShares Core Canadian Universe Bond Index ETF ,XBB.TO,Vanguard Total Bond Market Index Fund ETF ,BND
+Fixed Income,iShares Canadian Government Bond Index ETF, XGB.TO,iShares U.S. Treasury Bond ETF,GOVT
+Credit,iShares U.S. High Yield Bond Index ETF,XHY.TO,iShares iBoxx $ High Yield Corporate Bond ETF,HYG
+Credit,iShares U.S. IG Corporate Bond Index ETF (CAD-Hedged),XIG.TO,iShares iBoxx $ Investment Grade Corporate Bond ETF,LQD
 North American Equity,iShares S&P/TSX 60 Index ETF,XIU.TO,Vanguard Total Stock Market Index Fund ETF,VTI
 International Equity,iShares MSCI EAFE Index ETF (CAD-Hedged),XIN.TO,iShares MSCI EAFE ETF,EFA
-Emerging Market Equity,iShares MSCI Emerging Markets Index ETF,XEM.TO,Vanguard FTSE Emerging Markets Index Fund ETF ,VWO
-Commodity - Oil,etaPro Crude Oil 2X Daily Bull ETF,HOU.TO,United States Oil Fund LP,USO
+Emerging Market Equity,iShares MSCI Emerging Markets Index ETF,XEM.TO,Vanguard FTSE Emerging Markets Index Fund ETF ,VWO
 Commodity - Gold,HORIZONS GOLD E/ETF SHS,HUG.TO,SPDR Gold Trust,GLD
+Real Estate,iShares S&P/TSX Capped REIT Index ETF,XRE.TO,Vanguard Real Estate Index Fund ETF Shares,VNQ
+Global Infrastructure,BMO Global Infrastructure Index ETF,ZGI.TO,iShares Global Infrastructure ET,IGF
