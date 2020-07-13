@@ -14,6 +14,7 @@ from scipy import stats
 import calendar
 import statsmodels.api as sm
 import time
+import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 from copulas.visualization import scatter_2d
 # from pypfopt import EfficientFrontier
@@ -32,6 +33,9 @@ def _get_tickers():
 
 def nearest(items, pivot):
     return min(items, key=lambda x: abs(x - pivot))
+
+def leverage_return(r, rf, leverage_ratio):
+    return r + leverage_ratio * (r - rf)
 
 def splitted_returns(df, timestamps):
     pre_timestamp = df.index[0]
@@ -65,8 +69,13 @@ if __name__ == "__main__":
     # real estate etf: VNQ(USD), XRE.TO(CAD)
     # Govn bond etf: XGB.TO(CAD), GOVT(USD)
     # high yield bond etf: XHY.TO(CAD), HYG(USD)
-    ASSET_UNIVERSE_USD = ["GOVT", "HYG", "VTI", "EFA", "VWO","GLD", "VNQ"] 
-    ASSET_UNIVERSE_CAD = ["XGB.TO", "XHY.TO", "XIU.TO", "XIN.TO", "XEM.TO", "HUG.TO", "XRE.TO"]
+    # global infrastructure etf: ZGI.TO(CAD), IGF(USD)
+    ASSET_UNI_USD_Credit = ["IEF", "HYG", "LQD"]
+    ASSET_UNI_CAD_Credit = ["XGB.TO", "XHY.TO", "XIG.TO"]
+    ASSET_UNI_CAD_Equity = ["XIU.TO", "XIN.TO", "XEM.TO"]
+    ASSET_UNI_USD_Equity = ["VTI", "EFA", "VWO"] 
+    RF_TICKER = ["^IRX"]
+    
     
     # injection frequency = half year
     INJECTION_FREQ = 6
@@ -74,12 +83,13 @@ if __name__ == "__main__":
     # start date & end_date
     # investment period: 2015.4.1 - 2020.5.31
     # backtest period: 2010.4.1 - 2015.03.31
-    start_date = '2014-04-01'
+    start_date = '2014-10-01'
     end_date = '2020-05-31'
 
     #load data
-    df = yf.download(ASSET_UNIVERSE_USD + ASSET_UNIVERSE_CAD, start=start_date, end=end_date)      
+    df = yf.download(ASSET_UNI_USD_Credit + ASSET_UNI_CAD_Credit + ASSET_UNI_CAD_Equity + ASSET_UNI_USD_Equity + RF_TICKER, start=start_date, end=end_date)      
     df = df['Adj Close']
+    df["^IRX"] = df["^IRX"] / 100 
     dt_list = list(df.index)
     
     # FX
@@ -94,7 +104,7 @@ if __name__ == "__main__":
     df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
     
     # rolling window & rebalance frequency (both in months)
-    rolling_window = 6
+    rolling_window = 3
     rebalance_freq = 3
     
     # two lists to record account value
@@ -118,8 +128,10 @@ if __name__ == "__main__":
     # prepare data
     df_period_train = df[train_start_date: train_end_date]
     df_period_test = df[test_start_date: test_end_date]
-    timeseriesUSD = df_period_train[ASSET_UNIVERSE_USD].values
-    timeseriesCAD = df_period_train[ASSET_UNIVERSE_CAD].values
+    timeseriesUSDCredit = df_period_train[ASSET_UNI_USD_Credit].values
+    timeseriesUSDEquity = df_period_train[ASSET_UNI_USD_Equity].values
+    timeseriesCADCredit = df_period_train[ASSET_UNI_CAD_Credit].values
+    timeseriesCADEquity = df_period_train[ASSET_UNI_CAD_Equity].values
     
     # portfolio optimize
     erc_rp = ERCRiskParity()
@@ -127,30 +139,42 @@ if __name__ == "__main__":
     # mvoCAD = MVPort(timeseriesCAD)
     # weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.1, return_timeseries=False)
     # weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.1, return_timeseries=False)
-    initial_weights = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
-    risk_target_percent = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
-    weightUSD = erc_rp.get_signal(timeseriesUSD, initial_weights, risk_target_percent, False)
+    initial_weights = [1 / timeseriesUSDEquity.shape[1]] * timeseriesUSDEquity.shape[1]
+    risk_target_percent = [1 / timeseriesUSDEquity.shape[1]] * timeseriesUSDEquity.shape[1]
+    weightUSDEquity = erc_rp.get_signal(timeseriesUSDEquity, initial_weights, risk_target_percent, False)
+    weightUSDEquity *= 0.6
     
-    initial_weights = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
-    risk_target_percent = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
-    weightCAD = erc_rp.get_signal(timeseriesCAD, initial_weights, risk_target_percent, False)
+    initial_weights = [1 / timeseriesUSDCredit.shape[1]] * timeseriesUSDCredit.shape[1]
+    risk_target_percent = [1 / timeseriesUSDCredit.shape[1]] * timeseriesUSDCredit.shape[1]
+    weightUSDCredit = erc_rp.get_signal(timeseriesUSDCredit, initial_weights, risk_target_percent, False)
+    weightUSDCredit *= 0.4
+    
+    initial_weights = [1 / timeseriesCADEquity.shape[1]] * timeseriesCADEquity.shape[1]
+    risk_target_percent = [1 / timeseriesCADEquity.shape[1]] * timeseriesCADEquity.shape[1]
+    weightCADEquity = erc_rp.get_signal(timeseriesCADEquity, initial_weights, risk_target_percent, False)
+    weightCADEquity *= 0.6
+    
+    initial_weights = [1 / timeseriesCADCredit.shape[1]] * timeseriesCADCredit.shape[1]
+    risk_target_percent = [1 / timeseriesCADCredit.shape[1]] * timeseriesCADCredit.shape[1]
+    weightCADCredit = erc_rp.get_signal(timeseriesCADCredit, initial_weights, risk_target_percent, False)
+    weightCADCredit *= 0.4
     
     # array to dict
-    portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
-    portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
+    portfolio_USD = {**dict(zip(ASSET_UNI_USD_Credit, weightUSDCredit)), **dict(zip(ASSET_UNI_USD_Equity, weightUSDEquity))}
+    portfolio_CAD = {**dict(zip(ASSET_UNI_CAD_Credit, weightCADCredit)), **dict(zip(ASSET_UNI_CAD_Equity, weightCADEquity))}
     
     # initialize two accounts  
     # substract the transaction cost
-    accountUSD = Account("USD", 50000 / df_fx.loc[test_start_date] - len(ASSET_UNIVERSE_USD) * 5, portfolio_USD)
-    accountCAD = Account("CAD", 50000 - len(ASSET_UNIVERSE_CAD) * 5, portfolio_CAD)
+    accountUSD = Account("USD", 50000 / df_fx.loc[test_start_date] - len(portfolio_USD) * 5, portfolio_USD)
+    accountCAD = Account("CAD", 50000 - len(portfolio_CAD) * 5, portfolio_CAD)
     
     # initialize injection dates
     injection_dates = []
     
     for i in range(n_rebalance_freq):
         
-        price_arr_dict_CAD = df_period_test[ASSET_UNIVERSE_CAD].to_dict('list')
-        price_arr_dict_USD = df_period_test[ASSET_UNIVERSE_USD].to_dict('list')
+        price_arr_dict_CAD = df_period_test[ASSET_UNI_CAD_Credit + ASSET_UNI_CAD_Equity].to_dict('list')
+        price_arr_dict_USD = df_period_test[ASSET_UNI_USD_Credit + ASSET_UNI_USD_Equity].to_dict('list')
         FX_arr = df_period_test["FX"].values
         
         acc_gen_CAD = accountCAD.generate_market_value(price_arr_dict_CAD)
@@ -163,15 +187,15 @@ if __name__ == "__main__":
             
             acc_CAD_val_list.append(v1)
             acc_USD_val_list.append(v2)
-            
-            adjustment = breach_check(v1, v2)
+            v2_cad = v2 * FX_arr[j]
+            adjustment = breach_check(v1, v2_cad)
             
             if adjustment:
                 print("v1: "+ str(v1))
-                print("v2: "+ str(v1))
-                print("difference: "+ str((v1 - v2) / 2))
+                print("v2: "+ str(v2_ad))
+                print("difference: "+ str((v1 - v2_cad) / 2))
                 print("adjustment amout: " + str(adjustment))
-                if v1 > v2:
+                if v1 > v2_cad:
                     acc_gen_CAD.send(-adjustment)
                     acc_gen_USD.send(adjustment)
                 else:
@@ -199,39 +223,54 @@ if __name__ == "__main__":
            
         # re-slice data
         df_period_train = df[train_start_date: train_end_date]
-        timeseriesUSD = df_period_train[ASSET_UNIVERSE_USD].values
-        timeseriesCAD = df_period_train[ASSET_UNIVERSE_CAD].values
+        timeseriesUSDCredit = df_period_train[ASSET_UNI_USD_Credit].values
+        timeseriesUSDEquity = df_period_train[ASSET_UNI_USD_Equity].values
+        timeseriesCADCredit = df_period_train[ASSET_UNI_CAD_Credit].values
+        timeseriesCADEquity = df_period_train[ASSET_UNI_CAD_Equity].values
         df_period_test = df[test_start_date: test_end_date]
         
         # portfolio optimize
-        # mvoUSD = Robust_MVPort(timeseriesUSD)
-        # mvoCAD = Robust_MVPort(timeseriesCAD)
-        # weightUSD = mvoUSD.get_signal_ray(timeseriesUSD,target_return = 0.05, return_timeseries=False)
-        # weightCAD = mvoCAD.get_signal_ray(timeseriesCAD,target_return = 0.05, return_timeseries=False)
-        initial_weights = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
-        risk_target_percent = [1 / timeseriesUSD.shape[1]] * timeseriesUSD.shape[1]
-        weightUSD = erc_rp.get_signal(timeseriesUSD, initial_weights, risk_target_percent, False)
+
+        initial_weights = [1 / timeseriesUSDEquity.shape[1]] * timeseriesUSDEquity.shape[1]
+        risk_target_percent = [1 / timeseriesUSDEquity.shape[1]] * timeseriesUSDEquity.shape[1]
+        weightUSDEquity = erc_rp.get_signal(timeseriesUSDEquity, initial_weights, risk_target_percent, False)
+        weightUSDEquity *= 0.6
         
-        initial_weights = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
-        risk_target_percent = [1 / timeseriesCAD.shape[1]] * timeseriesCAD.shape[1]
-        weightCAD = erc_rp.get_signal(timeseriesCAD, initial_weights, risk_target_percent, False)
+        initial_weights = [1 / timeseriesUSDCredit.shape[1]] * timeseriesUSDCredit.shape[1]
+        risk_target_percent = [1 / timeseriesUSDCredit.shape[1]] * timeseriesUSDCredit.shape[1]
+        weightUSDCredit = erc_rp.get_signal(timeseriesUSDCredit, initial_weights, risk_target_percent, False)
+        weightUSDCredit *= 0.4
+        
+        initial_weights = [1 / timeseriesCADEquity.shape[1]] * timeseriesCADEquity.shape[1]
+        risk_target_percent = [1 / timeseriesCADEquity.shape[1]] * timeseriesCADEquity.shape[1]
+        weightCADEquity = erc_rp.get_signal(timeseriesCADEquity, initial_weights, risk_target_percent, False)
+        weightCADEquity *= 0.6
+        
+        initial_weights = [1 / timeseriesCADCredit.shape[1]] * timeseriesCADCredit.shape[1]
+        risk_target_percent = [1 / timeseriesCADCredit.shape[1]] * timeseriesCADCredit.shape[1]
+        weightCADCredit = erc_rp.get_signal(timeseriesCADCredit, initial_weights, risk_target_percent, False)
+        weightCADCredit *= 0.4
+        
+        # array to dict
+        portfolio_USD = {**dict(zip(ASSET_UNI_USD_Credit, weightUSDCredit)), **dict(zip(ASSET_UNI_USD_Equity, weightUSDEquity))}
+        portfolio_CAD = {**dict(zip(ASSET_UNI_CAD_Credit, weightCADCredit)), **dict(zip(ASSET_UNI_CAD_Equity, weightCADEquity))}
+        #weightCAD = initial_weights
         
         # previous portfolio weight
-        pre_weight_CAD = np.array(list(accountCAD.get_weight().values()))
-        pre_weight_USD = np.array(list(accountUSD.get_weight().values()))
+        pre_weight_CAD = accountCAD.get_weight()
+        pre_weight_USD = accountUSD.get_weight()
                 
         # calculate t cost for each turnover
-        temp1 = abs(weightUSD - pre_weight_USD)
-        temp2 = abs(weightCAD - pre_weight_CAD)
+        portf_USD_diff = {key: abs(pre_weight_USD[key] - portfolio_USD[key]) for key in portfolio_USD.keys()}
+        portf_CAD_diff = {key: abs(pre_weight_CAD[key] - portfolio_CAD[key]) for key in portfolio_CAD.keys()}
+        
+        temp1 = sum(portf_USD_diff.values())
+        temp2 = sum(portf_CAD_diff.values())
         t_cost_usd = len(temp1[temp1>0.001]) * 5
         t_cost_cad = len(temp2[temp2>0.001]) * 5
         
         accountCAD.transaction_cost(t_cost_cad)
         accountUSD.transaction_cost(t_cost_usd)
-               
-        # portfolio weights array to dict
-        portfolio_USD = dict(zip(ASSET_UNIVERSE_USD, weightUSD))
-        portfolio_CAD = dict(zip(ASSET_UNIVERSE_CAD, weightCAD))
     
         # feed new portfolios into accounts
         accountUSD.rebalance_active(portfolio_USD)
@@ -243,6 +282,7 @@ if __name__ == "__main__":
             acc_gen_USD.send(5000 / df_fx.loc[test_start_date])
             injection_dates.append(test_start_date)
             # print("injection = " + str(i))
+    
             
     test_time_period = dt_list[_test_start_date_index:]  
     acc_value_df = pd.DataFrame({"accountCAD": acc_CAD_val_list, "accountUSD": acc_USD_val_list}, index = test_time_period)
@@ -250,18 +290,41 @@ if __name__ == "__main__":
     # convert USD to CAD
     acc_value_df['accountUSD_CADHDG'] = acc_value_df["accountUSD"].multiply(df['FX'][test_time_period[0]:])   
     acc_value_df['portfolio'] = acc_value_df['accountUSD_CADHDG'] + acc_value_df['accountCAD']
+
     
+#%%
     # calculate daily return 
     acc_ret_df_d = splitted_returns(acc_value_df, injection_dates)
+    
+    # calculate daily leveraged return
+    
+    # read libor overnight rate
+    Libor_overnight = pd.read_csv("C:\\Users\\zhong\\Documents\\MMF\\Risk Management Lab\\Robo-Advisor\\data\\LIBOR_OVERNIGHT.csv", header=0)
+    Libor_overnight.index = Libor_overnight["DATE"]
+    del Libor_overnight["DATE"]
+    Libor_overnight.replace('.', np.nan, inplace=True)
+    Libor_overnight.fillna(method='ffill', inplace=True, axis=0)
+    Libor_overnight = Libor_overnight.astype(float)
+    Libor_overnight = Libor_overnight.groupby(pd.PeriodIndex(Libor_overnight.index, freq='Q'), axis=0).first()
+    
+    # acc_ret_df_d = acc_ret_df_d.join(Libor_overnight)
+    # leverage_ratio = 0.2
+    # acc_ret_df_d['lev_portf_ret'] = acc_ret_df_d['portfolio'] + leverage_ratio * (acc_ret_df_d['portfolio'] - acc_ret_df_d['LIBOR_OVERNIGHT'] / 100)
 
     # calculate quartly return
     acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
     
+    #calculate leveraged quarterly return
+    acc_ret_df_q = acc_ret_df_q.join(Libor_overnight)
+    leverage_ratio = 0.2
+    acc_ret_df_q['lev_portf_ret'] = acc_ret_df_q['portfolio'] + leverage_ratio * (acc_ret_df_q['portfolio'] - acc_ret_df_q['LIBOR_OVERNIGHT'] / 100)
+    
     acc_value_df.plot()
     plt.legend()
     plt.show()
-#%%    
-    # factor analysis
+    
+#%% factor analysis
+
     factor_df = pd.read_excel('C:\\Users\\zhong\\Documents\\MMF\\Risk Management Lab\\Robo-Advisor\\data\\factor data.xlsx', header=0)
     factor_df.index = factor_df['DATE']
     del factor_df['DATE']

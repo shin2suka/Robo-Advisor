@@ -1,0 +1,11 @@
+A,B,C,D,E
+Asset Class,CAD,ticker,USD,ticker
+Fixed Income,iShares Canadian Government Bond Index ETF, XGB.TO,iShares 7-10 Year Treasury Bond ETF,IEF
+Credit,iShares U.S. High Yield Bond Index ETF,XHY.TO,iShares iBoxx $ High Yield Corporate Bond ETF,HYG
+Credit,iShares U.S. IG Corporate Bond Index ETF (CAD-Hedged),XIG.TO,iShares iBoxx $ Investment Grade Corporate BondÿETF,LQD
+North American Equity,iShares S&P/TSX 60 Index ETF,XIU.TO,Vanguard Total Stock Market Index Fund ETF,VTI
+International Equity,iShares MSCI EAFE Index ETF (CAD-Hedged),XIN.TO,iShares MSCI EAFE ETF,EFA
+Emerging Market Equity,iShares MSCI Emerging Markets Index ETF,XEM.TO,Vanguard FTSE Emerging Markets Index Fund ETFÿ,VWO
+,,,,
+,,,,
+,,,,
