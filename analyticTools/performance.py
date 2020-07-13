@@ -49,11 +49,10 @@ def get_performance(return_value, acc_value, injection_dates, before_injection_d
 def get_weights(acc_value, injection_dates, before_injection_dates, Time_weighted = True):
     portfolio_value_half_yr_weight = acc_value.iloc[acc_value.index.isin([acc_value.index[0]] + injection_dates)]
     portfolio_value_half_yr_weight = portfolio_value_half_yr_weight.apply(lambda x: x/portfolio_value_half_yr_weight.sum(axis = 0),axis = 1).transpose().values
-    size = portfolio_value_half_yr_weight.shape[1] if portfolio_value_half_yr_weight.shape[1] %2 == 0 else portfolio_value_half_yr_weight.shape[1]-1
+    size = portfolio_value_half_yr_weight.shape[1]-1
     if Time_weighted == True:
         return np.array([[1/size] * size] * portfolio_value_half_yr_weight.shape[0])
-    if portfolio_value_half_yr_weight.shape[1]%2 != 0:
-        portfolio_value_half_yr_weight = np.delete(portfolio_value_half_yr_weight, -1, axis=1)
+    portfolio_value_half_yr_weight = np.delete(portfolio_value_half_yr_weight, -1, axis=1)
     return portfolio_value_half_yr_weight
 
 def get_returns(acc_value, injection_dates, before_injection_dates,weights):
@@ -62,7 +61,6 @@ def get_returns(acc_value, injection_dates, before_injection_dates,weights):
     portfolio_value_half_yr = portfolio_value_half_yr.reset_index(drop = True)
     if portfolio_value_half_yr.shape[0]%2 != 0:
         portfolio_value_half_yr.drop(portfolio_value_half_yr.tail(1).index,inplace=True)
-    print(portfolio_value_half_yr)
     semi_annually_return = portfolio_value_half_yr.groupby(portfolio_value_half_yr.index // 2).apply(lambda x: (x.iloc[1] - x.iloc[0]) / x.iloc[0]).values
     returns = np.diag(weights.dot(semi_annually_return))
     vfunc_rt = np.vectorize(lambda x: (1 + x / 2)**2 - 1)

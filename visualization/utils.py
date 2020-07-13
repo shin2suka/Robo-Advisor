@@ -30,11 +30,11 @@ def get_header(app):
                     ),
                     html.Div(
                         [
-                            dcc.Link(
-                                "Full View",
-                                href="/dash-financial-report/full-view",
-                                className="full-view-link",
-                            )
+                            # dcc.Link(
+                            #     "Full View",
+                            #     href="/dash-financial-report/full-view",
+                            #     className="full-view-link",
+                            # )
                         ],
                         className="five columns",
                     ),
@@ -51,21 +51,21 @@ def get_header(app):
 def get_menu():
     menu = html.Div(
         [
-            dcc.Link(
-                "Overview",
-                href="/dash-financial-report/overview",
-                className="tab first",
-            ),
-            dcc.Link(
-                "Price Performance",
-                href="/dash-financial-report/price-performance",
-                className="tab",
-            ),
-            dcc.Link(
-                "Portfolio & Management",
-                href="/dash-financial-report/portfolio-management",
-                className="tab",
-            ),
+            # dcc.Link(
+            #     "Overview",
+            #     href="/dash-financial-report/overview",
+            #     className="tab first",
+            # ),
+            # dcc.Link(
+            #     "Price Performance",
+            #     href="/dash-financial-report/price-performance",
+            #     className="tab",
+            # ),
+            # dcc.Link(
+            #     "Portfolio & Management",
+            #     href="/dash-financial-report/portfolio-management",
+            #     className="tab",
+            # ),
         ],
         className="row all-tabs",
     )

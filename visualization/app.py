@@ -4,11 +4,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-from pages import (
-    overview,
-    pricePerformance,
-    portfolioManagement
-)
+from pages import overview
+
 
 app = dash.Dash(
     __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
@@ -25,22 +22,10 @@ app.layout = html.Div(
 def display_page(pathname):
     if pathname == "/dash-financial-report/price-performance":
         return pricePerformance.create_layout(app)
-    elif pathname == "/dash-financial-report/portfolio-management":
-        return portfolioManagement.create_layout(app)
-    elif pathname == "/dash-financial-report/fees":
-        return feesMins.create_layout(app)
-    elif pathname == "/dash-financial-report/distributions":
-        return distributions.create_layout(app)
-    elif pathname == "/dash-financial-report/news-and-reviews":
-        return newsReviews.create_layout(app)
+
     elif pathname == "/dash-financial-report/full-view":
         return (
-            overview.create_layout(app),
-            pricePerformance.create_layout(app),
-            portfolioManagement.create_layout(app),
-            feesMins.create_layout(app),
-            distributions.create_layout(app),
-            newsReviews.create_layout(app),
+            overview.create_layout(app)
         )
     else:
         return overview.create_layout(app)
