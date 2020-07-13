@@ -18,6 +18,7 @@ df_port = pd.read_csv(DATA_PATH.joinpath("df_port.csv"))
 df_holdings = pd.read_csv(DATA_PATH.joinpath("df_holdings.csv"))
 df_benchmark = pd.read_csv(DATA_PATH.joinpath("df_benchmark.csv"))
 df_composition = pd.read_csv(DATA_PATH.joinpath("df_composition.csv"))
+df_performance = pd.read_csv(DATA_PATH.joinpath("df_performance.csv"))
 
 
 def create_layout(app):
@@ -28,24 +29,17 @@ def create_layout(app):
             # page 1
             html.Div(
                 [
-                    # Row 3
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    html.H5("Investment Objective"),
-                                    html.Br([]),
-                                    html.P(
-                                        "\
-                                    The portfolio's objective is to achieve a balance of current income and long-term capital appreciation, with a small bias towards capital appreciation. It invests primarily in a diversified mix of equity, fixed income and commodity managed by us and by other ETF fund managers.",
-                                        style={"color": "#ffffff"},
-                                        className="row",
-                                    ),
-                                ],
-                                className="product",
-                            )
+                            html.H5("Investment Objective"),
+                            html.P(
+                                "\
+                            The portfolio's objective is to achieve a balance of current income and long-term capital appreciation, with a small bias towards capital appreciation. It invests primarily in a diversified mix of equity, fixed income and commodity managed by us and by other ETF fund managers.",
+                                style={"color": "#ffffff"},
+                                className="row",
+                            ),
                         ],
-                        className="row",
+                        className="product",
                     ),
                     # Row 1
                     html.Div(
@@ -86,20 +80,8 @@ def create_layout(app):
                                         figure={
                                             "data": [
                                                 go.Bar(
-                                                    x=[
-                                                        "1 Year",
-                                                        "2 Year",
-                                                        "3 Year",
-                                                        "4 Year",
-                                                        "5 Year",
-                                                    ],
-                                                    y=[
-                                                        "21.67",
-                                                        "11.26",
-                                                        "15.62",
-                                                        "8.37",
-                                                        "11.11",
-                                                    ],
+                                                    x=df_performance["Date"],
+                                                    y=df_performance["Portfolio"],
                                                     marker={
                                                         "color": "#97151c",
                                                         "line": {
@@ -110,20 +92,8 @@ def create_layout(app):
                                                     name="All-weather Portfolio",
                                                 ),
                                                 go.Bar(
-                                                    x=[
-                                                        "1 Year",
-                                                        "2 Year",
-                                                        "3 Year",
-                                                        "4 Year",
-                                                        "5 Year",
-                                                    ],
-                                                    y=[
-                                                        "21.83",
-                                                        "11.41",
-                                                        "15.79",
-                                                        "8.50",
-                                                        "2.5",
-                                                    ],
+                                                    x=df_performance["Date"],
+                                                    y=df_performance["Benchmark"],
                                                     marker={
                                                         "color": "#dddddd",
                                                         "line": {
@@ -131,7 +101,7 @@ def create_layout(app):
                                                             "width": 2,
                                                         },
                                                     },
-                                                    name="HFRI Benchmark",
+                                                    name="S&P Risk Parity Benchmark",
                                                 ),
                                             ],
                                             "layout": go.Layout(
@@ -150,7 +120,7 @@ def create_layout(app):
                                                     "r": 0,
                                                     "t": 20,
                                                     "b": 10,
-                                                    "l": 10,
+                                                    "l": 30,
                                                 },
                                                 showlegend=True,
                                                 title="",
@@ -238,10 +208,10 @@ def create_layout(app):
                                                         '#97140c',
                                                         '#ff9900',
                                                         '#f8e0b0',
-                                                        '#696969',
                                                         '#93b5cf',
                                                         '#1ba784',
                                                         '#ad6598',
+                                                        '#696969',
                                                       ]
                                                     },
                                                     'hole':.3,
@@ -309,12 +279,10 @@ def create_layout(app):
                                                 ),
                                                 go.Scatter(
                                                     x=df_benchmark["Date"],
-                                                    y=df_benchmark[
-                                                        "HFRI Benchmark"
-                                                    ],
+                                                    y=df_benchmark["Benchmark"],
                                                     line={"color": "#b5b5b5"},
                                                     mode="lines",
-                                                    name="HFRI Benchmark",
+                                                    name="S&P Risk Parity Benchmark",
                                                 ),
                                             ],
                                             "layout": go.Layout(

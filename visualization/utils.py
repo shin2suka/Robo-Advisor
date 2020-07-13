@@ -3,41 +3,41 @@ import dash_core_components as dcc
 
 
 def Header(app):
-    return html.Div([get_header(app), html.Br([]), get_menu()])
+    return html.Div([get_header(app)])
 
 
 def get_header(app):
     header = html.Div(
         [
-            html.Div(
-                [
-                    # html.Img(
-                    #     src=app.get_asset_url("logo.png"),
-                    #     className="logo",
-                    # ),
-                    # html.A(
-                    #     html.Button("Learn More", id="learn-more-button"),
-                    #     href="https://plot.ly/dash/pricing/",
-                    # ),
-                ],
-                className="row",
-            ),
+            # html.Div(
+            #     [
+            #         # html.Img(
+            #         #     src=app.get_asset_url("logo.png"),
+            #         #     className="logo",
+            #         # ),
+            #         # html.A(
+            #         #     html.Button("Learn More", id="learn-more-button"),
+            #         #     href="https://plot.ly/dash/pricing/",
+            #         # ),
+            #     ],
+            #     className="row",
+            # ),
             html.Div(
                 [
                     html.Div(
                         [html.H5("Investment Report")],
-                        className="seven columns main-title",
+                        className="six columns main-title",
                     ),
-                    html.Div(
-                        [
-                            # dcc.Link(
-                            #     "Full View",
-                            #     href="/dash-financial-report/full-view",
-                            #     className="full-view-link",
-                            # )
-                        ],
-                        className="five columns",
-                    ),
+                    # html.Div(
+                    #     [
+                    #         # dcc.Link(
+                    #         #     "Full View",
+                    #         #     href="/dash-financial-report/full-view",
+                    #         #     className="full-view-link",
+                    #         # )
+                    #     ],
+                    #     className="five columns",
+                    # ),
                 ],
                 className="twelve columns",
                 style={"padding-left": "0"},
@@ -48,28 +48,28 @@ def get_header(app):
     return header
 
 
-def get_menu():
-    menu = html.Div(
-        [
-            # dcc.Link(
-            #     "Overview",
-            #     href="/dash-financial-report/overview",
-            #     className="tab first",
-            # ),
-            # dcc.Link(
-            #     "Price Performance",
-            #     href="/dash-financial-report/price-performance",
-            #     className="tab",
-            # ),
-            # dcc.Link(
-            #     "Portfolio & Management",
-            #     href="/dash-financial-report/portfolio-management",
-            #     className="tab",
-            # ),
-        ],
-        className="row all-tabs",
-    )
-    return menu
+# def get_menu():
+#     menu = html.Div(
+#         [
+#             # dcc.Link(
+#             #     "Overview",
+#             #     href="/dash-financial-report/overview",
+#             #     className="tab first",
+#             # ),
+#             # dcc.Link(
+#             #     "Price Performance",
+#             #     href="/dash-financial-report/price-performance",
+#             #     className="tab",
+#             # ),
+#             # dcc.Link(
+#             #     "Portfolio & Management",
+#             #     href="/dash-financial-report/portfolio-management",
+#             #     className="tab",
+#             # ),
+#         ],
+#         className="row all-tabs",
+#     )
+#     return menu
 
 
 def make_dash_table(df):
