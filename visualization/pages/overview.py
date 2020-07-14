@@ -34,7 +34,9 @@ def create_layout(app):
                             html.H5("Investment Objective"),
                             html.P(
                                 "\
-                            The portfolio's objective is to achieve a balance of current income and long-term capital appreciation, with a small bias towards capital appreciation. It invests primarily in a diversified mix of equity, fixed income and commodity managed by us and by other ETF fund managers.",
+                The multi-asset portfolio is to combine capital growth and modest income potential for medium term through an equal contribution\
+                 to risk approach. The portfolio invests in diversified ETF instruments with global exposures by avoiding concentration of\
+                 risk through the construction of a risk balanced portfolio. We manage risk and take advantage of traditional asset classes in a non-traditional way.",
                                 style={"color": "#ffffff"},
                                 className="row",
                             ),
@@ -55,15 +57,10 @@ def create_layout(app):
                                             managing risk."
                                     ),
                                     html.P(
-                                        "• Rigorous portfolio construction by an experienced\
-                                            team combined with regular monitoring and daily\
-                                            cash flow rebalancing help to ensure each portfolio\
-                                            stays on track."
+                                        "• Rigorous portfolio construction using 60/40 strategy to provide reasonable reuturns with bond like volatility, which lead to a high risk-adjusted return."
                                     ),
                                     html.P(
-                                        "• From creating the optimal asset mix and selecting\
-                                            funds, to their monitoring and rebalancing, each\
-                                            portfolio delivers convenience and simplicity."
+                                        "• Traditional asset class allocations combined with equal risk to contribution strategy gives a competitive and robust portfolio."
                                     ),
                                 ],
                                 className="six columns",
