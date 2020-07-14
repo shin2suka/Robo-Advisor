@@ -23,9 +23,11 @@ from pypfopt import risk_models
 from pypfopt import expected_returns
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 
-import sys
+import pathlib
 
-path = sys.path[0] + "/"
+# get relative data folder
+PATH = pathlib.Path(__file__).parent
+DATA_PATH = PATH.joinpath("..\Robo-Advisor").resolve()
 
 def _get_tickers():
     if CLIENTS_INFO["risk_level"] == "high":
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     """
     # path = r"C:\Users\11708\Documents\GitHub\Robo-Advisor"
     # benchmark
-    benchmark_df = pd.read_csv(path + "\BlackRock.csv").set_index('Date')
+    benchmark_df = pd.read_csv(DATA_PATH.joinpath("BlackRock.csv")).set_index('Date')
     benchmark_df.index = pd.to_datetime(benchmark_df.index)
     cut_range = [x for x in benchmark_df.index if x >= pd.to_datetime(first_test_start_date) and x <= pd.to_datetime(end_date)]
     benchmark_df = benchmark_df.loc[cut_range]
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     portfolio_benchmark = pd.DataFrame(portfolio_benchmark,index = index)
     # print(benchmark_df)
 
-    risk_free_df = pd.read_csv(path + "\LIBOR_OVERNIGHT.csv").set_index('DATE')
+    risk_free_df = pd.read_csv(DATA_PATH.joinpath("LIBOR_OVERNIGHT.csv")).set_index('DATE')
     risk_free_df.index = pd.to_datetime(risk_free_df.index)
     cut_df = [x for x in risk_free_df.index if x >= pd.to_datetime(first_test_start_date) and x <= pd.to_datetime(end_date)]
     risk_free_df = risk_free_df.loc[cut_df]
@@ -391,21 +393,21 @@ if __name__ == "__main__":
     # acc_ret_df_d['lev_portf_ret'] = acc_ret_df_d['portfolio'] + leverage_ratio * (acc_ret_df_d['portfolio'] - acc_ret_df_d['LIBOR_OVERNIGHT'] / 100)
 
     # try get_performance
-    acc_value_df.to_csv(path + "\Acc_value_df.csv", index=True)
-    acc_ret_df_d.to_csv(path + "\Acc_ret_df_d.csv", index=True)
-    benchmark_cad.to_csv(path + "\Benchamark_value.csv", index = True)
-    get_performance(acc_ret_df_d, acc_value_df, injection_dates, before_injection_dates, risk_free, std_risk_free, False).to_csv(path + "\portfolio_performance.csv", index=True)
-    get_performance(fx_benchmark, benchmark_cad, injection_dates, before_injection_dates, risk_free, std_risk_free, False).to_csv(path + "\Benchmark_performance.csv", index=True)
+    acc_value_df.to_csv(DATA_PATH.joinpath("Acc_value_df.csv"), index=True)
+    acc_ret_df_d.to_csv(DATA_PATH.joinpath("Acc_ret_df_d.csv"), index=True)
+    benchmark_cad.to_csv(DATA_PATH.joinpath("Benchamark_value.csv"), index = True)
+    get_performance(acc_ret_df_d, acc_value_df, injection_dates, before_injection_dates, risk_free, std_risk_free, False).to_csv(DATA_PATH.joinpath("portfolio_performance.csv"), index=True)
+    get_performance(fx_benchmark, benchmark_cad, injection_dates, before_injection_dates, risk_free, std_risk_free, False).to_csv(DATA_PATH.joinpath("Benchmark_performance.csv"), index=True)
 
     print(get_performance(acc_ret_df_d, acc_value_df, injection_dates, before_injection_dates, risk_free, std_risk_free, False))
     print(get_performance(fx_benchmark, benchmark_cad, injection_dates, before_injection_dates, risk_free, std_risk_free, False))
     # calculate quartly return
-    acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
-
-    #calculate leveraged quarterly return
-    acc_ret_df_q = acc_ret_df_q.join(Libor_overnight)
-    leverage_ratio = 0.2
-    acc_ret_df_q['lev_portf_ret'] = acc_ret_df_q['portfolio'] + leverage_ratio * (acc_ret_df_q['portfolio'] - acc_ret_df_q['LIBOR_OVERNIGHT'] / 100)
+    # acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
+    #
+    # #calculate leveraged quarterly return
+    # acc_ret_df_q = acc_ret_df_q.join(Libor_overnight)
+    # leverage_ratio = 0.2
+    # acc_ret_df_q['lev_portf_ret'] = acc_ret_df_q['portfolio'] + leverage_ratio * (acc_ret_df_q['portfolio'] - acc_ret_df_q['LIBOR_OVERNIGHT'] / 100)
 
     acc_value_df.plot()
     plt.legend()
@@ -414,7 +416,7 @@ if __name__ == "__main__":
 #%%
     # factor analysis
 
-    factor_df = pd.read_excel(path + '\factor data.xlsx', header=0)
+    factor_df = pd.read_excel(DATA_PATH.joinpath("data\factor data.xlsx"), header=0)
     factor_df.index = factor_df['DATE']
     del factor_df['DATE']
 
