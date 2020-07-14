@@ -22,7 +22,8 @@ import pathlib
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
-DATA_PATH = PATH.joinpath("..\Robo-Advisor").resolve()
+DATA_PATH = PATH.joinpath("../Robo-Advisor/data").resolve()
+VIS_PATH = PATH.joinpath("../Robo-Advisor/visualization").resolve()
 
 def _get_tickers():
     if CLIENTS_INFO["risk_level"] == "high":
@@ -406,12 +407,12 @@ if __name__ == "__main__":
 
     acc_value_df.plot()
     plt.legend()
-    plt.show()
+    # plt.show()
 
 #%%
     # factor analysis
 
-    factor_df = pd.read_excel(DATA_PATH.joinpath("data\\factor data.xlsx"), header=0)
+    factor_df = pd.read_excel(DATA_PATH.joinpath("factor data.xlsx"), header=0)
     factor_df.index = factor_df['DATE']
     del factor_df['DATE']
 
@@ -473,3 +474,8 @@ if __name__ == "__main__":
     plt.legend(handles=[s1, s2, s3, s4], loc=2)
     ax = (100 * portf_ret_pred['return']).plot(kind='bar', color=[colors[i] for i in portf_ret_pred['group']], rot =45)
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    
+    # generate investment report
+    import os
+    import subprocess
+    subprocess.call(['python', VIS_PATH.joinpath('app.py')])
