@@ -18,11 +18,6 @@ import time
 import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 from copulas.visualization import scatter_2d
-from pypfopt import EfficientFrontier
-from pypfopt import risk_models
-from pypfopt import expected_returns
-from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
-
 import pathlib
 
 # get relative data folder
@@ -96,7 +91,7 @@ if __name__ == "__main__":
     # start date & end_date
     # investment period: 2015.4.1 - 2020.5.31
     # backtest period: 2010.4.1 - 2015.03.31
-    start_date = '2014-10-01'
+    start_date = '2010-10-01'
     end_date = '2020-05-31'
     first_test_start_date = '2015-04-01'
 
@@ -402,7 +397,7 @@ if __name__ == "__main__":
     print(get_performance(acc_ret_df_d, acc_value_df, injection_dates, before_injection_dates, risk_free, std_risk_free, False))
     print(get_performance(fx_benchmark, benchmark_cad, injection_dates, before_injection_dates, risk_free, std_risk_free, False))
     # calculate quartly return
-    # acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
+    acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
     #
     # #calculate leveraged quarterly return
     # acc_ret_df_q = acc_ret_df_q.join(Libor_overnight)
@@ -416,7 +411,7 @@ if __name__ == "__main__":
 #%%
     # factor analysis
 
-    factor_df = pd.read_excel(DATA_PATH.joinpath("data\factor data.xlsx"), header=0)
+    factor_df = pd.read_excel(DATA_PATH.joinpath("data\\factor data.xlsx"), header=0)
     factor_df.index = factor_df['DATE']
     del factor_df['DATE']
 
