@@ -104,7 +104,7 @@ if __name__ == "__main__":
     df.fillna(method = 'ffill', axis=0, inplace=True) #forward fill
 
     # rolling window & rebalance frequency (both in months)
-    rolling_window = 3
+    rolling_window = 6
     rebalance_freq = 3
 
     # two lists to record account value
@@ -309,8 +309,13 @@ if __name__ == "__main__":
 
     acc_ret_df_d = splitted_returns(acc_value_df, injection_dates)
     
-    # calculate daily leveraged return
+    # calculate quartly return
+    acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
     
+    
+    
+#%% calculate daily leveraged return 
+     
     # read libor overnight rate
     Libor_overnight = pd.read_csv("C:\\Users\\zhong\\Documents\\MMF\\Risk Management Lab\\Robo-Advisor\\data\\LIBOR_OVERNIGHT.csv", header=0)
     Libor_overnight.index = Libor_overnight["DATE"]
@@ -326,8 +331,6 @@ if __name__ == "__main__":
 
     # try get_performance
     print(get_performance(acc_ret_df_d, acc_value_df, injection_dates, before_injection_dates, True))
-    # calculate quartly return
-    acc_ret_df_q = acc_value_df.groupby(pd.PeriodIndex(acc_value_df.index, freq='Q'), axis=0).apply(lambda x: (x.iloc[-1] - x.iloc[0]) / x.iloc[0])
     
     #calculate leveraged quarterly return
     acc_ret_df_q = acc_ret_df_q.join(Libor_overnight)
