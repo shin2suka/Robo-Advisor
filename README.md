@@ -36,3 +36,4 @@ solved:
 3. risk models and senarios
 4. time/money weighted stats
 5. portfolio composition pie chart
+<img width="1205" alt="investment_report" src="https://user-images.githubusercontent.com/44070624/139174556-b8643773-9c52-49b0-b2ca-ab14f8a18fc0.png">
